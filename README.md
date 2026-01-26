@@ -1,38 +1,93 @@
+## Screenshots
+
+> Place your screenshots in the `screenshots/` folder. Example filenames: `dashboard.png`, `ngo-profile.png`, `campaign-list.png`, `chatbot.png`.
+
+### Example Screenshots
+
+| Dashboard | NGO Profile | Campaign List | Chatbot |
+|-----------|-------------|--------------|---------|
+| ![Dashboard](screenshots/dashboard.png) | ![NGO Profile](screenshots/ngo-profile.png) | ![Campaign List](screenshots/campaign-list.png) | ![Chatbot](screenshots/chatbot.png) |
+
+---
+
+## Usage Examples
+
+### 1. Register as a User or NGO
+Go to `/register`, fill in your details, and select your role. NGOs must upload verification documents for admin approval.
+
+### 2. Browse and Search NGOs
+Visit `/ngos` to discover verified NGOs. Use the search and filter options to find organizations by name, category, or location.
+
+### 3. View NGO Profiles
+Click on any NGO to see a detailed profile, including programs, people, impact, and financials with interactive graphs.
+
+### 4. Donate or Volunteer
+On a campaign page, click "Donate" to contribute or "Volunteer" to sign up. Track your contributions in your dashboard.
+
+### 5. Use the AI Chatbot
+Open the Chatbot page to ask questions about the platform, get NGO recommendations, or learn how to use features.
+
+### 6. Admin Actions
+Admins can verify NGOs, manage users, and review registrations from the Admin Dashboard.
+
+---
 # NGO-Connect
 
-NGO-Connect is a full-stack web application designed to connect NGOs with donors and volunteers. It provides a platform for NGOs to create profiles, showcase their campaigns, and receive donations. Users can browse through different NGOs, learn about their work, and contribute to their causes.
 
-## Features
+NGO-Connect is a full-stack AI-enabled platform connecting NGOs, donors, and volunteers. It features rich demo data, interactive dashboards, and smart tools for discovery, engagement, and impact tracking. NGOs can create detailed profiles, launch campaigns, and showcase their work, while users can discover, donate, volunteer, and interact via messaging and an AI chatbot.
 
-*   **User Authentication:** Secure user registration and login system.
-*   **NGO Profiles:** NGOs can create and manage their profiles, including their mission, vision, and contact information.
-*   **Campaign Management:** NGOs can create and manage fundraising campaigns with details like goals, progress, and duration.
-*   **Donation System:** Users can easily donate to their favorite campaigns.
-*   **Messaging:** A real-time messaging system for communication between users and NGOs.
-*   **Admin Dashboard:** An admin dashboard to manage users, NGOs, and campaigns.
-*   **AI Chatbot:** An AI-powered chatbot to assist users with their queries.
-*   **Search and Filter:** Users can search for NGOs and campaigns based on various criteria.
+
+## Features (2026 Demo)
+
+- **Rich NGO Profiles:** Detailed, visually rich profiles with programs, people, impact metrics, financials (with graphs), badges, and more.
+- **Campaign Management:** NGOs can create, update, and manage fundraising and volunteering campaigns. Users can browse, search, and filter campaigns by category and location.
+- **Donation & Volunteering:** Secure donation system and volunteer sign-up for campaigns. Users can track their contributions and volunteering history.
+- **AI Chatbot:** Smart, rule-based assistant answers questions, recommends NGOs, and helps users navigate the platform.
+- **Personalized Dashboards:** Separate dashboards for users, NGOs, and admins, showing stats, recent activity, and quick actions.
+- **Admin Tools:** Admin dashboard for verifying NGOs, managing users, and reviewing registrations.
+- **Messaging:** In-app messaging between users and NGOs for direct communication.
+- **Search & Discovery:** AI-powered recommendations, search, and filters for NGOs and campaigns.
+- **Impact Tracking:** Interactive graphs (Recharts) for NGO financials and impact metrics.
+- **Profile Management:** Users and NGOs can update their profiles, including uploading documents and editing details.
+- **Fraud Detection (Demo):** AI endpoint for scoring potential fraud risk in NGO/campaign data.
+- **Volunteer Matching (Demo):** AI endpoint for matching volunteers to campaigns based on skills and location.
+- **Fully Populated Demo Data:** Backend seeded with highly detailed, realistic NGO and campaign data for presentation/demo.
+
 
 ## Tech Stack
 
 **Frontend:**
-
-*   React.js
-*   React Router
-*   Axios
-*   Tailwind CSS
-*   Heroicons
+- React 18 (SPA)
+- React Router v6
+- Axios (API calls)
+- Tailwind CSS (UI)
+- Heroicons (icons)
+- Recharts (interactive graphs)
 
 **Backend:**
+- Node.js + Express.js
+- MongoDB + Mongoose
+- JWT (auth)
+- Bcryptjs (passwords)
+- Multer (uploads)
+- CORS, Dotenv
 
-*   Express.js
-*   MongoDB
-*   Mongoose
-*   JWT (for authentication)
-*   Bcryptjs (for password hashing)
-*   Multer (for file uploads)
-*   Cors
-*   Dotenv
+**AI/Smart Features:**
+- Rule-based AI endpoints (recommendation, classification, chatbot, fraud scoring, volunteer matching)
+- AI-powered campaign classification and NGO recommendations
+
+**Other:**
+- Admin dashboard, messaging, RESTful API, rich seed data
+
+
+## Current Progress (Jan 2026)
+
+- All major modules implemented: authentication, NGO/user/admin dashboards, campaign management, donations, messaging, AI chatbot, search, and profile management.
+- Fully demo-ready: visually rich, interactive, and populated with realistic data for all sections.
+- GitHub repo cleaned and pushed (no large files tracked).
+- Tech stack and codebase up to date with modern best practices.
+
+---
 
 ## Installation
 
