@@ -10,6 +10,8 @@ const CampaignSchema = new mongoose.Schema({
   currentAmount: { type: Number, default: 0 },
   volunteersNeeded: [String],
   volunteers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  flagged: { type: Boolean, default: false },
+  flagReason: String,
   createdAt: { type: Date, default: Date.now }
 });
 module.exports = mongoose.model('Campaign', CampaignSchema);

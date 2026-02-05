@@ -1,3 +1,4 @@
+const auth = require('../middleware/auth');
 const express = require('express');
 const router = express.Router();
 const AILog = require('../models/AILog');
@@ -36,6 +37,179 @@ router.post('/recommend-ngos', async (req, res) => {
     res.json(scored.slice(0, 10));
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/recommendations', auth(), async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get user preferences (either from preferences object or fallback to basic fields)
+    const userInterests = user.preferences?.interests || user.interests || [];
+    const userLocation = user.preferences?.location || user.location || '';
+    const userSkills = user.preferences?.skills || user.skills || [];
+    const preferredLocations = user.preferences?.preferredLocations || [];
+    const causes = user.preferences?.causes || user.preferences?.causesCareAbout || [];
+    
+    // Get verified NGOs and active campaigns
+    const ngos = await NGO.find({ verified: true });
+    const campaigns = await Campaign.find().populate('ngo', 'name logo location');
+    const validCampaigns = campaigns.filter(c => c.ngo && c.ngo._id);
+
+    // Scoring and matching for NGOs
+    const scoredNgos = ngos.map(ngo => {
+      let score = 0;
+      let reasons = [];
+
+      // Location matching (highest priority)
+      const userLocations = [userLocation, ...preferredLocations].filter(Boolean);
+      if (userLocations.length > 0) {
+        // Check geographies
+        if (ngo.geographies && ngo.geographies.length > 0) {
+          userLocations.forEach(loc => {
+            if (ngo.geographies.some(g => g.toLowerCase().includes(loc.toLowerCase()))) {
+              score += 5;
+              reasons.push('Matches your location');
+            }
+          });
+        }
+        // Check location field
+        if (ngo.location && userLocations.some(loc => ngo.location.toLowerCase().includes(loc.toLowerCase()))) {
+          score += 4;
+          reasons.push('Works in your area');
+        }
+      }
+
+      // Interest/cause matching
+      const allUserInterests = [...new Set([...userInterests, ...causes])];
+      if (allUserInterests.length > 0) {
+        // Match with primary sectors
+        if (ngo.primarySectors && ngo.primarySectors.length > 0) {
+          const commonPrimary = allUserInterests.filter(i => 
+            ngo.primarySectors.some(s => s.toLowerCase().includes(i.toLowerCase()))
+          );
+          score += commonPrimary.length * 3;
+          commonPrimary.forEach(i => reasons.push(`Focuses on ${i}`));
+        }
+        // Match with secondary sectors
+        if (ngo.secondarySectors && ngo.secondarySectors.length > 0) {
+          const commonSecondary = allUserInterests.filter(i => 
+            ngo.secondarySectors.some(s => s.toLowerCase().includes(i.toLowerCase()))
+          );
+          score += commonSecondary.length * 1;
+        }
+        // Match with category
+        if (ngo.category && allUserInterests.some(i => ngo.category.toLowerCase().includes(i.toLowerCase()))) {
+          score += 2;
+          reasons.push('Aligned with your interests');
+        }
+      }
+
+      // Skills matching (for volunteering)
+      if (userSkills.length > 0) {
+        if (ngo.primarySectors) {
+          const matchingSkills = userSkills.filter(skill => 
+            ngo.primarySectors.some(s => s.toLowerCase().includes(skill.toLowerCase()))
+          );
+          score += matchingSkills.length * 1.5;
+          if (matchingSkills.length > 0) {
+            reasons.push('Needs your skills');
+          }
+        }
+      }
+
+      // Verified NGOs get bonus
+      if (ngo.verified) {
+        score += 2;
+      }
+
+      // Add a small random factor to break ties
+      score += Math.random() * 0.5;
+
+      return { ngo, score, reasons: [...new Set(reasons)].slice(0, 3) };
+    });
+
+    scoredNgos.sort((a, b) => b.score - a.score);
+    const recommendedNgos = scoredNgos.slice(0, 10);
+
+    // Scoring and matching for Campaigns
+    const scoredCampaigns = validCampaigns.map(campaign => {
+      let score = 0;
+      let reasons = [];
+
+      // Location matching
+      if (userLocation && campaign.location) {
+        if (campaign.location.toLowerCase().includes(userLocation.toLowerCase())) {
+          score += 5;
+          reasons.push('In your location');
+        }
+      }
+
+      // Category matching
+      const allUserInterests = [...new Set([...userInterests, ...causes])];
+      if (allUserInterests.length > 0 && campaign.category) {
+        if (allUserInterests.some(i => campaign.category.toLowerCase().includes(i.toLowerCase()))) {
+          score += 4;
+          reasons.push(`In ${campaign.category}`);
+        }
+      }
+
+      // NGO credibility (based on parent NGO's score)
+      const ngoMatch = campaign.ngo
+        ? scoredNgos.find(n => n.ngo._id.toString() === campaign.ngo._id.toString())
+        : null;
+      if (ngoMatch) {
+        score += ngoMatch.score * 0.3;
+        reasons.push(...ngoMatch.reasons.slice(0, 2));
+      }
+
+      // Progress bonus (campaigns closer to goal)
+      if (campaign.goalAmount > 0) {
+        const progress = campaign.currentAmount / campaign.goalAmount;
+        if (progress >= 0.75) {
+          score += 2; // Almost funded
+          reasons.push('Almost funded');
+        } else if (progress >= 0.5) {
+          score += 1;
+        }
+      }
+
+      // Small random factor
+      score += Math.random() * 0.5;
+
+      return { campaign, score, reasons: [...new Set(reasons)].slice(0, 3) };
+    });
+
+    scoredCampaigns.sort((a, b) => b.score - a.score);
+    const recommendedCampaigns = scoredCampaigns.slice(0, 10);
+
+    // Log the recommendation
+    await AILog.create({ 
+      type: 'recommendations', 
+      payload: { 
+        userId: user._id, 
+        preferences: {
+          location: userLocation,
+          interests: userInterests,
+          skills: userSkills
+        }
+      }, 
+      result: { 
+        ngoCount: recommendedNgos.length,
+        campaignCount: recommendedCampaigns.length
+      }
+    });
+
+    res.json({
+      ngos: recommendedNgos,
+      campaigns: recommendedCampaigns
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
   }
 });
 

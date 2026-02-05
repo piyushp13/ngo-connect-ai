@@ -21,8 +21,10 @@ router.post('/campaign/:id', auth(['user']), async (req, res) => {
     const { amount } = req.body;
     const camp = await Campaign.findById(req.params.id);
     if (!camp) return res.status(404).json({ message: 'Campaign not found' });
-    const donation = await Donation.create({ user: req.user.id, ngo: camp.ngo, campaign: camp._id, amount });
-    camp.currentAmount = (camp.currentAmount || 0) + (amount || 0);
+    const numericAmount = Number(amount) || 0;
+    const donation = await Donation.create({ user: req.user.id, ngo: camp.ngo, campaign: camp._id, amount: numericAmount });
+    const currentAmount = Number(camp.currentAmount) || 0;
+    camp.currentAmount = currentAmount + numericAmount;
     await camp.save();
     res.json({ message: 'Donation recorded', donation });
   } catch (err) {
