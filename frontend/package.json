@@ -2,6 +2,7 @@
   "name": "ngo-connect-frontend",
   "version": "1.0.0",
   "private": true,
+  "proxy": "http://localhost:5001",
   "dependencies": {
     "@heroicons/react": "^1.0.6",
     "@testing-library/jest-dom": "^6.9.1",

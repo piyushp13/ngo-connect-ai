@@ -12,6 +12,8 @@ const NGOSchema = new mongoose.Schema({
   location: String,
   verified: { type: Boolean, default: false },
   verificationDocs: [String],
+  flagged: { type: Boolean, default: false },
+  flagReason: String,
   createdAt: { type: Date, default: Date.now },
 
   // New detailed fields

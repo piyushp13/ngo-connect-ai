@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const User = require('./src/models/User');
 const NGO = require('./src/models/NGO');
 const Campaign = require('./src/models/Campaign');
+const VolunteerOpportunity = require('./src/models/VolunteerOpportunity');
 const connectDB = require('./src/config/db');
 const { faker } = require('@faker-js/faker/locale/en');
 
@@ -14,6 +15,7 @@ const seedDatabase = async () => {
     await User.deleteMany({});
     await NGO.deleteMany({});
     await Campaign.deleteMany({});
+    await VolunteerOpportunity.deleteMany({});
 
     console.log('🧹 Cleared existing data');
 
@@ -40,6 +42,7 @@ const seedDatabase = async () => {
 
     const createdUsers = await User.insertMany(users);
     console.log(`✅ Created ${createdUsers.length} sample users`);
+    const rahulUser = createdUsers.find(u => u.email === 'rahul@example.com');
 
     // --- CREATE NGOs ---
     const ngos = [];
@@ -66,6 +69,8 @@ const seedDatabase = async () => {
             email: faker.internet.email(),
             password: hashedPassword,
             role: 'ngo',
+            category: faker.helpers.arrayElement(categories),
+            location: faker.helpers.arrayElement(cities),
             verified: faker.datatype.boolean(0.8), // 80% chance of being verified
             logo: faker.image.url(),
             badges: faker.helpers.arrayElements(["FCRA", "80G", "12A", "CSR-1"], faker.number.int({ min: 1, max: 4 })),
@@ -107,6 +112,15 @@ const seedDatabase = async () => {
     const campaigns = [];
     for (let i = 0; i < 40; i++) {
         const isFundraising = faker.datatype.boolean();
+        let volunteers = [];
+        if (!isFundraising) {
+          const sampleVolunteers = faker.helpers.arrayElements(createdUsers, faker.number.int({ min: 0, max: 10 }));
+          volunteers = sampleVolunteers.map(u => u._id);
+          if (rahulUser && faker.datatype.boolean(0.4)) {
+            volunteers.push(rahulUser._id);
+          }
+          volunteers = [...new Set(volunteers.map(id => id.toString()))];
+        }
         campaigns.push({
             ngo: faker.helpers.arrayElement(createdNGOs)._id,
             title: faker.commerce.productName(),
@@ -117,12 +131,48 @@ const seedDatabase = async () => {
             goalAmount: isFundraising ? faker.finance.amount({ min: 50000, max: 1000000, dec: 0 }) : 0,
             currentAmount: isFundraising ? faker.finance.amount({ min: 0, max: 40000, dec: 0 }) : 0,
             volunteersNeeded: isFundraising ? [] : ['General', 'Specialist', 'Marketing', 'Events'],
-            volunteers: isFundraising ? [] : faker.helpers.arrayElements(createdUsers, faker.number.int({ min: 0, max: 10 })).map(u => u._id)
+            volunteers: volunteers
         });
     }
 
     const createdCampaigns = await Campaign.insertMany(campaigns);
     console.log(`✅ Created ${createdCampaigns.length} sample campaigns`);
+
+    // --- CREATE VOLUNTEER OPPORTUNITIES ---
+    const volunteerSkills = ['Teaching', 'Fundraising', 'Design', 'Development', 'Medical', 'Event Planning', 'Marketing', 'Writing'];
+    const commitments = ['One-time', 'Weekly', 'Monthly', 'Flexible'];
+    const opportunities = [];
+    createdNGOs.forEach(ngo => {
+      const count = faker.number.int({ min: 1, max: 4 });
+      for (let i = 0; i < count; i++) {
+        const startDate = faker.date.soon({ days: 30 });
+        const endDate = faker.date.soon({ days: 60, refDate: startDate });
+        const applicantUsers = faker.helpers.arrayElements(createdUsers, faker.number.int({ min: 0, max: 8 }));
+        let applicants = applicantUsers.map(u => u._id);
+        if (rahulUser && faker.datatype.boolean(0.4)) {
+          applicants.push(rahulUser._id);
+        }
+        applicants = [...new Set(applicants.map(id => id.toString()))];
+
+        opportunities.push({
+          ngo: ngo._id,
+          title: faker.person.jobTitle(),
+          description: faker.lorem.paragraph(),
+          location: ngo.location || faker.helpers.arrayElement(cities),
+          skills: faker.helpers.arrayElements(volunteerSkills, faker.number.int({ min: 1, max: 4 })),
+          commitment: faker.helpers.arrayElement(commitments),
+          dateRange: {
+            startDate,
+            endDate
+          },
+          spots: faker.number.int({ min: 5, max: 30 }),
+          applicants
+        });
+      }
+    });
+
+    const createdOpportunities = await VolunteerOpportunity.insertMany(opportunities);
+    console.log(`✅ Created ${createdOpportunities.length} volunteer opportunities`);
 
     // Create admin user
     await User.create({

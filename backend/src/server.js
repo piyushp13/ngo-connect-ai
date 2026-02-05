@@ -8,8 +8,11 @@ const ngoRoutes = require('./routes/ngos');
 const campaignRoutes = require('./routes/campaigns');
 const messageRoutes = require('./routes/messages');
 const donationRoutes = require('./routes/donations');
+const volunteerRoutes = require('./routes/volunteering');
 const adminRoutes = require('./routes/admin');
 const aiRoutes = require('./routes/ai');
+const usersRoutes = require('./routes/users');
+const notificationsRoutes = require('./routes/notifications');
 
 const app = express();
 app.use(cors({
@@ -27,8 +30,11 @@ app.use('/api/ngos', ngoRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/donations', donationRoutes);
+app.use('/api/volunteering', volunteerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 app.get('/', (req, res) => res.send({ ok: true, message: 'NGO Connect API running' }));
 

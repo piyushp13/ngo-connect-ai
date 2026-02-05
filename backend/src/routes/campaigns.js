@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const Campaign = require('../models/Campaign');
+const FlagRequest = require('../models/FlagRequest');
 const auth = require('../middleware/auth');
 const AILog = require('../models/AILog');
 
@@ -65,6 +66,53 @@ router.post('/:id/volunteer', auth(['user']), async (req, res) => {
       await camp.save();
     }
     res.json({ message: 'Joined as volunteer' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Flag campaign (user/ngo/admin)
+router.post('/:id/flag', auth(['admin']), async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const campaign = await Campaign.findByIdAndUpdate(
+      req.params.id,
+      { flagged: true, flagReason: reason || 'Flagged by user' },
+      { new: true }
+    );
+    if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+    res.json({ message: 'Campaign flagged', campaign });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// User requests admin to flag campaign
+router.post('/:id/flag-request', auth(['user']), async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const campaign = await Campaign.findById(req.params.id);
+    if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+    if (campaign.flagged) return res.status(400).json({ message: 'Campaign already flagged' });
+
+    const existing = await FlagRequest.findOne({
+      targetType: 'campaign',
+      targetId: campaign._id,
+      requestedBy: req.user.id,
+      status: 'pending'
+    });
+    if (existing) {
+      return res.status(400).json({ message: 'You already have a pending request for this campaign' });
+    }
+
+    const request = await FlagRequest.create({
+      targetType: 'campaign',
+      targetId: campaign._id,
+      targetName: campaign.title,
+      reason: reason || 'Reported by user',
+      requestedBy: req.user.id
+    });
+    res.json({ message: 'Flag request submitted', request });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
