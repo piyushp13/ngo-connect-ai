@@ -35,11 +35,14 @@ router.get('/:id', async (req, res) => {
 // NGO get their own profile
 router.get('/me', auth(['ngo']), async (req, res) => {
   try {
+    console.log('User in /ngos/me:', req.user);
     const ngo = await NGO.findById(req.user.id);
-    if (!ngo) return res.status(404).json({ message: 'NGO not found' });
+    console.log('NGO found:', ngo);
+    if (!ngo) return res.status(404).json({ message: 'NGO not found', ngo: null });
     res.json(ngo);
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error in /ngos/me:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
