@@ -57,6 +57,8 @@ const issueVolunteerCertificate = async (applicationId) => {
     type: 'volunteer',
     title: 'Volunteer Completion Certificate',
     certificateNumber: generateCertificateNumber('volunteer'),
+    status: 'active',
+    issuedAt: new Date(),
     metadata: {
       recipientName: application.fullName || application.user?.name,
       recipientEmail: application.email || application.user?.email,

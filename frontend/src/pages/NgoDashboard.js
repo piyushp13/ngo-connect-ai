@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api, {
+  getNgoCampaignVolunteers,
   getMessageConversations,
   getNgoDonationApprovalQueue,
   getNgoDonationTransactions,
@@ -39,6 +40,13 @@ export default function NgoDashboard() {
   });
   const [volunteerRequests, setVolunteerRequests] = useState([]);
 
+  const [campaignVolunteerSummary, setCampaignVolunteerSummary] = useState({
+    campaignsCount: 0,
+    totalVolunteers: 0,
+    totalRegistrations: 0
+  });
+  const [campaignVolunteers, setCampaignVolunteers] = useState([]);
+
   const [donationApprovals, setDonationApprovals] = useState([]);
   const [volunteerApprovals, setVolunteerApprovals] = useState([]);
   const [approvalLoading, setApprovalLoading] = useState(true);
@@ -46,6 +54,11 @@ export default function NgoDashboard() {
   const [approvalMessage, setApprovalMessage] = useState('');
 
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
+
+  const volunteerSignupTotal = useMemo(
+    () => Number(volunteerSummary.totalRequests || 0) + Number(campaignVolunteerSummary.totalVolunteers || 0),
+    [volunteerSummary, campaignVolunteerSummary]
+  );
 
   const pendingCertificateTotal = useMemo(
     () => Number(donationSummary.pendingCertificateCount || 0) + Number(volunteerSummary.pendingCertificateCount || 0),
@@ -74,10 +87,11 @@ export default function NgoDashboard() {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [ngoRes, donationRes, volunteerRes, conversationsRes] = await Promise.all([
+      const [ngoRes, donationRes, volunteerRes, campaignVolunteersRes, conversationsRes] = await Promise.all([
         api.get('/ngos/me'),
         getNgoDonationTransactions({ limit: 25 }),
         getNgoVolunteerRequests({ limit: 25 }),
+        getNgoCampaignVolunteers({ limit: 50 }),
         getMessageConversations()
       ]);
 
@@ -99,6 +113,13 @@ export default function NgoDashboard() {
       });
       setVolunteerRequests(volunteerRes.data?.requests || []);
 
+      setCampaignVolunteerSummary(campaignVolunteersRes.data?.summary || {
+        campaignsCount: 0,
+        totalVolunteers: 0,
+        totalRegistrations: 0
+      });
+      setCampaignVolunteers(campaignVolunteersRes.data?.volunteers || []);
+
       const conversations = conversationsRes.data || [];
       const unread = conversations.reduce((sum, item) => sum + Number(item?.unreadCount || 0), 0);
       setMessageUnreadCount(unread);
@@ -108,6 +129,8 @@ export default function NgoDashboard() {
       setDonationTransactions([]);
       setVolunteerSummary({ totalRequests: 0, appliedCount: 0, assignedCount: 0, completedCount: 0, withdrawnCount: 0, pendingCertificateCount: 0 });
       setVolunteerRequests([]);
+      setCampaignVolunteerSummary({ campaignsCount: 0, totalVolunteers: 0, totalRegistrations: 0 });
+      setCampaignVolunteers([]);
       setMessageUnreadCount(0);
     } finally {
       setLoading(false);
@@ -179,8 +202,8 @@ export default function NgoDashboard() {
               <p className="text-xl font-bold text-gray-900 mt-1">{Number(donationSummary.completedCount || 0)}</p>
             </div>
             <div className="rounded-lg border border-gray-200 p-4">
-              <p className="text-sm text-gray-500">Volunteer Requests</p>
-              <p className="text-xl font-bold text-gray-900 mt-1">{Number(volunteerSummary.totalRequests || 0)}</p>
+              <p className="text-sm text-gray-500">Volunteer Signups</p>
+              <p className="text-xl font-bold text-gray-900 mt-1">{Number(volunteerSignupTotal || 0)}</p>
             </div>
             <div className="rounded-lg border border-gray-200 p-4">
               <p className="text-sm text-gray-500">Pending Certificates</p>
@@ -409,6 +432,67 @@ export default function NgoDashboard() {
                       <td className="px-3 py-2 text-gray-700">{item.certificateApprovalStatus || 'not_requested'}</td>
                     </tr>
                   ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-2xl font-bold text-gray-900">Campaign Volunteer Registrations</h2>
+            <div className="text-sm text-gray-600 flex items-center gap-3">
+              <span>Campaigns: {campaignVolunteerSummary.campaignsCount}</span>
+              <span>Volunteers: {campaignVolunteerSummary.totalVolunteers}</span>
+            </div>
+          </div>
+
+          <p className="mt-2 text-sm text-gray-600">
+            These are volunteers who registered directly from campaign pages.
+          </p>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 text-gray-700">
+                <tr>
+                  <th className="text-left px-3 py-2">Volunteer</th>
+                  <th className="text-left px-3 py-2">Campaign</th>
+                  <th className="text-left px-3 py-2">Submitted</th>
+                  <th className="text-left px-3 py-2">Preferred Activities</th>
+                  <th className="text-left px-3 py-2">Availability</th>
+                </tr>
+              </thead>
+              <tbody>
+                {campaignVolunteers.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-3 py-6 text-center text-gray-500">No campaign volunteer registrations found.</td>
+                  </tr>
+                ) : (
+                  campaignVolunteers.map((item, index) => {
+                    const registration = item.registration || null;
+                    const submittedAt = registration?.updatedAt || registration?.createdAt || '';
+                    const activities = Array.isArray(registration?.preferredActivities)
+                      ? registration.preferredActivities.filter(Boolean).join(', ')
+                      : '';
+                    return (
+                      <tr key={`${item.user?.id || item.userId || index}-${item.campaign?.id || index}`} className="border-t border-gray-100">
+                        <td className="px-3 py-2 text-gray-800">
+                          <p className="font-medium">{item.user?.name || registration?.fullName || 'Volunteer'}</p>
+                          <p className="text-xs text-gray-500">{item.user?.email || registration?.email || 'No email'}</p>
+                          {(item.user?.mobileNumber || registration?.phone) && (
+                            <p className="text-xs text-gray-500">{item.user?.mobileNumber || registration?.phone}</p>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">
+                          <p className="font-medium">{item.campaign?.title || 'Campaign'}</p>
+                          <p className="text-xs text-gray-500">{item.campaign?.location || item.campaign?.area || ''}</p>
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">{submittedAt ? when(submittedAt) : 'N/A'}</td>
+                        <td className="px-3 py-2 text-gray-700">{activities || (registration ? '-' : 'Joined (no form details)')}</td>
+                        <td className="px-3 py-2 text-gray-700">{registration?.availability || '-'}</td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

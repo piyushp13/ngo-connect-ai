@@ -5,6 +5,8 @@ const User = require('../models/User');
 const FlagRequest = require('../models/FlagRequest');
 const auth = require('../middleware/auth');
 const AILog = require('../models/AILog');
+const { query } = require('../db/postgres');
+const { normalizeIdValue } = require('../db/utils');
 
 const cleanArray = (value) => {
   if (Array.isArray(value)) return value.map((item) => String(item || '').trim()).filter(Boolean);
@@ -51,6 +53,11 @@ const normalizeVolunteerPayload = (payload = {}, user = null) => {
   };
 };
 
+const parseTimestamp = (value) => {
+  const parsed = Date.parse(value || '');
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
+
 // Get all campaigns where the user is a volunteer
 router.get('/my/volunteered', auth(['user', 'ngo', 'admin']), async (req, res) => {
   try {
@@ -87,6 +94,122 @@ router.get('/', async (req, res) => {
     const visible = camps.filter(c => c.ngo && c.ngo.verified !== false && c.ngo.isActive !== false);
     res.json(visible);
   } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// NGO view volunteer registrations across their campaigns (campaign volunteer feature)
+router.get('/ngo/volunteers', auth(['ngo']), async (req, res) => {
+  try {
+    const campaigns = await Campaign.find({ ngo: req.user.id }).sort({ createdAt: -1 });
+    const campaignDocs = campaigns.map((campaign) =>
+      (campaign && typeof campaign.toObject === 'function' ? campaign.toObject() : campaign)
+    );
+
+    const userIds = new Set();
+    const rows = [];
+
+    for (const campaign of campaignDocs) {
+      const campaignInfo = {
+        id: campaign.id,
+        title: campaign.title,
+        location: campaign.location,
+        area: campaign.area
+      };
+
+      const volunteerIds = Array.isArray(campaign.volunteers) ? campaign.volunteers : [];
+      const registrations = Array.isArray(campaign.volunteerRegistrations) ? campaign.volunteerRegistrations : [];
+
+      const byUserId = new Map();
+
+      for (const registration of registrations) {
+        const userId = normalizeIdValue(registration?.user);
+        if (!userId) continue;
+        userIds.add(userId);
+        byUserId.set(userId, { ...(registration || {}), user: userId });
+      }
+
+      for (const entry of volunteerIds) {
+        const userId = normalizeIdValue(entry);
+        if (!userId) continue;
+        userIds.add(userId);
+        if (!byUserId.has(userId)) byUserId.set(userId, null);
+      }
+
+      for (const [userId, registration] of byUserId.entries()) {
+        rows.push({
+          campaign: campaignInfo,
+          userId,
+          registration
+        });
+      }
+    }
+
+    const ids = Array.from(userIds);
+    const userMap = new Map();
+    if (ids.length > 0) {
+      const { rows: userRows } = await query(
+        `
+        SELECT external_id, source_doc
+        FROM users_rel
+        WHERE external_id = ANY($1::text[])
+        `,
+        [ids]
+      );
+
+      for (const row of userRows) {
+        const doc = row?.source_doc && typeof row.source_doc === 'object' ? { ...row.source_doc } : {};
+        if (!doc.id) doc.id = row.external_id;
+        userMap.set(String(row.external_id), doc);
+      }
+    }
+
+    const volunteers = rows
+      .map((row) => {
+        const userDoc = userMap.get(String(row.userId));
+        const registration = row.registration || null;
+        const fallbackName = registration?.fullName || userDoc?.name || 'Volunteer';
+        const fallbackEmail = registration?.email || userDoc?.email || '';
+        const fallbackPhone = registration?.phone || userDoc?.mobileNumber || '';
+
+        return {
+          campaign: row.campaign,
+          user: {
+            id: userDoc?.id || String(row.userId),
+            name: fallbackName,
+            email: fallbackEmail,
+            mobileNumber: fallbackPhone
+          },
+          registration: registration
+            ? {
+              fullName: registration.fullName,
+              email: registration.email,
+              phone: registration.phone,
+              preferredActivities: registration.preferredActivities || [],
+              availability: registration.availability || '',
+              motivation: registration.motivation || '',
+              createdAt: registration.createdAt || null,
+              updatedAt: registration.updatedAt || null
+            }
+            : null
+        };
+      })
+      .sort((left, right) => {
+        const leftTime = parseTimestamp(left.registration?.updatedAt || left.registration?.createdAt);
+        const rightTime = parseTimestamp(right.registration?.updatedAt || right.registration?.createdAt);
+        return rightTime - leftTime;
+      });
+
+    res.json({
+      summary: {
+        campaignsCount: campaignDocs.length,
+        totalVolunteers: userIds.size,
+        totalRegistrations: volunteers.filter((entry) => Boolean(entry.registration)).length
+      },
+      volunteers
+    });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 });

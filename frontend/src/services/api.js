@@ -99,6 +99,9 @@ export const getNgoVolunteerRequests = (params = {}) => api.get('/volunteering/n
 export const reviewVolunteerCertificateRequest = (applicationId, data) =>
   api.post(`/volunteering/applications/${applicationId}/certificate/decision`, data);
 
+// Campaign volunteer registrations (campaign volunteer feature)
+export const getNgoCampaignVolunteers = (params = {}) => api.get('/campaigns/ngo/volunteers', { params });
+
 // Messages
 export const getMessageConversations = () => api.get('/messages/conversations');
 export const getMessageThread = (counterpartId) => api.get(`/messages/thread/${counterpartId}`);

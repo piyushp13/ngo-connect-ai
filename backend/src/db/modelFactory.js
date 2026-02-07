@@ -103,6 +103,51 @@ const applyUpdatePayload = (sourceDoc, update = {}) => {
   return target;
 };
 
+const collapseRefValue = (value) => {
+  if (Array.isArray(value)) {
+    return value.map((entry) => collapseRefValue(entry));
+  }
+
+  if (isPlainObject(value)) {
+    if (value.id !== undefined && value.id !== null) {
+      return String(value.id);
+    }
+    return value;
+  }
+
+  return value;
+};
+
+const collapseRefAtPath = (target, pathParts) => {
+  if (!target || pathParts.length === 0) return;
+  const [head, ...tail] = pathParts;
+
+  if (tail.length === 0) {
+    if (target[head] === undefined) return;
+    target[head] = collapseRefValue(target[head]);
+    return;
+  }
+
+  const next = target[head];
+  if (Array.isArray(next)) {
+    next.forEach((entry) => collapseRefAtPath(entry, tail));
+    return;
+  }
+  if (isPlainObject(next)) {
+    collapseRefAtPath(next, tail);
+  }
+};
+
+const collapseRefs = (payload = {}, refs = {}) => {
+  if (!payload || !isPlainObject(payload) || !refs) return payload;
+  for (const path of Object.keys(refs)) {
+    const parts = String(path).split('.').filter(Boolean);
+    if (parts.length === 0) continue;
+    collapseRefAtPath(payload, parts);
+  }
+  return payload;
+};
+
 const attachDocumentMethods = (Model, doc) => {
   if (!doc || !isPlainObject(doc)) return doc;
 
@@ -281,6 +326,9 @@ class BaseModel {
 
   static async _upsertRaw(payload = {}, options = {}) {
     const document = deepClone(payload || {});
+    // Never persist populated objects into JSONB; store ref IDs only.
+    // This keeps Postgres-native queries predictable.
+    collapseRefs(document, this.refs || {});
     const idValue = document.id;
     const normalizedId = idValue ? String(idValue) : generateId();
     document.id = normalizedId;
