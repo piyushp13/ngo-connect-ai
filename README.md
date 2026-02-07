@@ -1,206 +1,223 @@
 # NGO-Connect
 
-NGO-Connect is a full-stack, AI-enabled platform designed to connect NGOs, donors, and volunteers in one place. It helps NGOs showcase their impact and manage campaigns, while giving users a simple way to discover verified NGOs, donate, and volunteer. AI features enhance discovery, recommendations, and support.
+NGO-Connect is a full-stack platform that connects donors, volunteers, NGOs, and admins in one workflow. The project now runs on a PostgreSQL-backed architecture across the backend runtime.
 
-## Features (Detailed)
-- Discover verified NGOs with search and filters.
-- Dedicated pages for Discover NGOs, Volunteer in Campaigns, Donate, and Smart Insights.
-- Campaigns can be funding-only, volunteer-only, or hybrid.
-- Donation tracking with live progress and “Campaign Done” state.
-- Volunteer sign-up directly inside campaign pages.
-- User dashboard with donation history, volunteer history, notifications, and recommendations.
-- NGO dashboard with campaign stats, volunteer counts, and verification status.
-- Admin dashboard with verification workflow, user management, analytics charts, and platform oversight.
-- Admin-only moderation: flag campaigns/NGOs, review user flag requests, resolve flags.
-- Admin notifications broadcasted to users and NGOs.
-- AI chatbot powered by Gemini for instant help and discovery.
-- AI-powered recommendations based on user preferences and activity.
-- Messaging between users and NGOs.
-- Role-based access control (user, NGO, admin) with protected routes.
-- File uploads for NGO verification documents.
+## Architecture At A Glance
 
-## Tech Stack & Tools
-### Frontend
+```
+React SPA (frontend)
+  -> Axios API client + JWT
+Express API (backend)
+  -> Route handlers + auth middleware + service layer
+PostgreSQL
+  -> *_rel tables + JSONB source_doc + relational keys/indexes
+```
+
+## Repository Layout
+
+```
+Ngo-Connect/
+├── backend/
+│   ├── sql/                     # PostgreSQL schema (normalized_schema.sql)
+│   ├── src/
+│   │   ├── db/                  # pg pool, model factory, query helpers
+│   │   ├── middleware/          # JWT auth + role checks
+│   │   ├── models/              # Model wrappers mapped to *_rel tables
+│   │   ├── routes/              # Domain API routes
+│   │   ├── services/            # External service adapters (payments)
+│   │   └── utils/               # Utility helpers (certificates, etc.)
+│   ├── docs/                    # Migration/design notes
+│   └── seed.js                  # Sample data seeding
+├── frontend/
+│   └── src/
+│       ├── components/          # Shared UI + route guards
+│       ├── pages/               # Feature pages (user/ngo/admin)
+│       ├── services/            # API client
+│       └── utils/               # Client-side helpers
+└── README.md
+```
+
+## Frontend Design
+
+### Core Stack
 - React 18
 - React Router v6
 - Axios
 - Tailwind CSS
 - Recharts
-- Heroicons
-- react-scripts
+- Leaflet + react-leaflet
 
-### Backend
-- Node.js
-- Express.js
-- MongoDB + Mongoose
-- JWT authentication
-- bcryptjs
-- Multer (file uploads)
-- CORS
-- Dotenv
-- @google/generative-ai (Gemini)
+### Routing And Access Control
+- `frontend/src/App.js` defines all page routes.
+- `ProtectedRoute` gates authenticated routes.
+- `UserRoute` gates donor/volunteer-only screens.
+- `AdminRoute` gates admin-only screens.
 
-### Dev Tools
-- nodemon (backend hot reload)
-- @faker-js/faker (database seeding)
+### Feature Areas
+- Public: Home, NGO list/profile, campaign list/details.
+- User: discover NGOs, donations, volunteer campaigns/opportunities, recommendations, insights, dashboard/profile, messaging.
+- NGO: profile updates, campaign creation, volunteer and donation operations.
+- Admin: NGO verification, flags moderation, categories, notifications, requests, analytics, user management.
 
-## Dependencies (from package.json)
-### Backend
-- @google/generative-ai
-- bcryptjs
-- cors
-- dotenv
-- express
-- jsonwebtoken
-- mongoose
-- multer
-- nodemon (dev)
-- @faker-js/faker (dev)
+### API Client Pattern
+- `frontend/src/services/api.js` centralizes all HTTP calls.
+- JWT token is injected via Axios request interceptor.
+- API base comes from `REACT_APP_API_URL` (defaults to `http://localhost:5001/api`).
+- Frontend exposes feature-specific API helpers for donations, volunteering, certificates, categories, requests, recommendations, and NGO discovery.
 
-### Frontend
-- react
-- react-dom
-- react-router-dom
-- axios
-- tailwindcss
-- recharts
-- @heroicons/react
-- react-scripts
-- @testing-library/react
-- @testing-library/jest-dom
-- @faker-js/faker (dev)
-- @types/google-one-tap (dev)
+## Backend Design
 
-## Setup Guide (Full Instructions)
+### Runtime Stack
+- Node.js + Express
+- PostgreSQL (`pg`)
+- JWT auth (`jsonwebtoken`)
+- Password hashing (`bcryptjs`)
+- Multer uploads
+- Gemini integration (`@google/generative-ai`)
 
-### 1) Install required tools (in order)
-1. Install **Node.js LTS** (includes npm).
-2. Install **MongoDB** (local installation or use MongoDB Atlas).
-3. Install **Git** (if not already installed).
+### API Composition
+Mounted in `backend/src/server.js`:
+- `/api/auth`
+- `/api/ngos`
+- `/api/campaigns`
+- `/api/donations`
+- `/api/volunteering`
+- `/api/certificates`
+- `/api/messages`
+- `/api/notifications`
+- `/api/categories`
+- `/api/requests`
+- `/api/users`
+- `/api/admin`
+- `/api/ai`
 
-### 2) Clone the repo
-```bash
-git clone <your-repo-url>
-cd Ngo-Connect
-```
+### Layered Structure
+- Routes: request validation, authorization, response shaping.
+- Middleware: token verification + role-based access.
+- Models: table mappings via `createModel` in `backend/src/db/modelFactory.js`.
+- DB layer: pooled pg connection + SQL helpers in `backend/src/db/postgres.js`.
+- Services: payment gateway abstraction (`mock` and `razorpay`).
 
-### 3) Install backend dependencies
-```bash
-cd backend
-npm install
-```
+### Key Backend Flows
+- Donation flow:
+  - Initiate payment order (`/api/donations/campaign/:id/initiate`).
+  - Confirm payment (`/api/donations/:id/confirm`).
+  - Update donation state, campaign amount, and certificate approval workflow.
+- Volunteer flow:
+  - Opportunity publishing by NGOs.
+  - User applications and completion state transitions.
+  - NGO certificate approval decision endpoints.
+- Admin flow:
+  - NGO verification/rejection.
+  - Flags moderation and resolution.
+  - Broadcast notifications and analytics endpoints.
 
-### 4) Install frontend dependencies
-```bash
-cd ../frontend
-npm install
-```
+## Database Design (PostgreSQL)
 
-### 5) Configure environment variables
-Create a `.env` file in `backend/`:
+### ID Strategy
+- `id BIGSERIAL` is the internal relational primary key.
+- `external_id TEXT UNIQUE` is the API-facing stable ID.
+- `source_doc JSONB` stores full API payload compatibility.
+- `created_at` and `updated_at` are maintained on all core tables.
+
+### Main Tables
+- `users_rel`
+- `ngos_rel`
+- `categories_rel`
+- `campaigns_rel`
+- `volunteer_opportunities_rel`
+- `volunteer_applications_rel`
+- `donations_rel`
+- `certificates_rel`
+- `messages_rel`
+- `notifications_rel`
+- `help_requests_rel`
+- `flag_requests_rel`
+- `ai_logs_rel`
+
+### Join Tables
+- `ngo_categories_rel`
+- `campaign_volunteers_rel`
+- `campaign_volunteer_registrations_rel`
+- `opportunity_applicants_rel`
+
+### Core Relationships
+- Campaigns belong to NGOs.
+- Donations link users, campaigns, and NGOs.
+- Volunteer applications link users, opportunities, and NGOs.
+- Certificates link to donation or volunteer-completion records.
+- Requests, messages, notifications, and flags link to user/admin actors.
+
+### Query Semantics
+- Route-level filtering and update behavior has been moved toward explicit PostgreSQL logic.
+- SQL joins and JSONB expressions are used where route filters need richer selection.
+- Mongo-style query/update operators are not used in route handlers for the newer Postgres-native paths.
+
+## Setup
+
+### Prerequisites
+1. Node.js LTS
+2. PostgreSQL 14+
+3. npm
+
+### Backend Env (`backend/.env`)
+
 ```env
 PORT=5001
-MONGO_URI=<your_mongodb_uri>
-JWT_SECRET=<your_jwt_secret>
-GEMINI_API_KEY=<your_gemini_api_key>
+POSTGRES_URL=postgresql://<user>:<password>@localhost:5432/ngo_connect
+JWT_SECRET=<strong-secret>
+GEMINI_API_KEY=<optional>
+PAYMENT_GATEWAY_PROVIDER=mock
+# Optional for Razorpay
+# RAZORPAY_KEY_ID=<key>
+# RAZORPAY_KEY_SECRET=<secret>
 ```
 
-Create a `.env` file in `frontend/` (optional but recommended):
+### Frontend Env (`frontend/.env`)
+
 ```env
 REACT_APP_API_URL=http://localhost:5001/api
 ```
 
-### 6) (Optional) Seed the database
-```bash
-cd ../backend
-node seed.js
-```
-This creates sample users, NGOs, campaigns, and an admin account.
+### Install + Run
 
-### 7) Run the backend server
 ```bash
+# backend
 cd backend
+npm install
+npm run db:relational-schema
+npm run seed
 npm run dev
-```
-Backend runs at `http://localhost:5001`.
 
-### 8) Run the frontend server
-```bash
+# frontend (new terminal)
 cd ../frontend
+npm install
 npm start
 ```
-Frontend runs at `http://localhost:3000`.
 
-## Test Credentials (after seeding)
+## Seed Credentials (Local)
 - Admin: `admin@ngoconnect.org` / `password123`
 - User: `rahul@example.com` / `password123`
 - NGO: `eduforall@ngo.org` / `password123`
 
-## Protected Routes
-Some routes require authentication. If you’re not logged in, you’ll be redirected to the login page.
-
-Protected routes include:
-- Discover NGOs
-- Volunteer in Campaigns
-- Donate
-- Get Smart Insights
-- Dashboards and profile pages
-
-## API Overview
-Key API groups:
-- `/api/auth` Authentication (register, login)
-- `/api/users` User preferences and profile
-- `/api/ngos` NGO profiles and verification
-- `/api/campaigns` Campaigns, volunteering
-- `/api/donations` Donations
-- `/api/messages` Messaging
-- `/api/admin` Admin moderation, analytics, verifications
-- `/api/notifications` Admin notifications to users/NGOs
-- `/api/ai` Recommendations, classification, chatbot
+## API Surface Summary
+- Authentication and profile: `/api/auth`, `/api/users`
+- NGO and campaigns: `/api/ngos`, `/api/campaigns`
+- Donations, volunteering, certificates: `/api/donations`, `/api/volunteering`, `/api/certificates`
+- Communication and operations: `/api/messages`, `/api/notifications`, `/api/requests`
+- Platform admin and intelligence: `/api/admin`, `/api/ai`, `/api/categories`
 
 ## Troubleshooting
-- **MongoDB connection errors**:  
-  - Ensure MongoDB is running locally or your Atlas cluster is reachable.  
-  - Confirm `MONGO_URI` in `backend/.env` is correct and includes the database name.  
-  - Check firewall/IP whitelist if using MongoDB Atlas.
+- `404` on donation/payment endpoints:
+  - Confirm frontend uses `REACT_APP_API_URL=http://localhost:5001/api`.
+  - Confirm backend is running on port `5001`.
+- DB connection failures:
+  - Verify `POSTGRES_URL` and ensure PostgreSQL is running.
+  - Re-run `npm run db:relational-schema` and `npm run seed`.
+- Auth failures:
+  - Ensure `JWT_SECRET` is set and stable across backend restarts.
+  - Re-login after backend auth changes.
 
-- **Missing environment variables**:  
-  - If the backend crashes on startup, verify `.env` exists in `backend/` with `PORT`, `MONGO_URI`, and `JWT_SECRET`.  
-  - AI chatbot features require `GEMINI_API_KEY`. Without it, chatbot falls back or errors.
-
-- **Port already in use**:  
-  - If you see `EADDRINUSE`, another process is already using that port.  
-  - Stop the existing process or change the port in `.env` (backend) or `package.json`/`.env` (frontend).
-
-- **Frontend 404s or API errors**:  
-  - Ensure backend is running on `http://localhost:5001`.  
-  - Check `frontend/.env` has `REACT_APP_API_URL=http://localhost:5001/api`.  
-  - Restart the frontend after editing `.env`.
-
-- **Authentication issues**:  
-  - If protected routes always redirect to login, clear `localStorage` and re-login.  
-  - Make sure backend `JWT_SECRET` matches tokens being issued.
-
-## Project Structure
-```
-Ngo-Connect/
-├── backend/
-│   ├── src/
-│   │   ├── middleware/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   └── server.js
-│   ├── seed.js
-│   └── package.json
-└── frontend/
-    ├── public/
-    ├── src/
-    │   ├── components/
-    │   ├── pages/
-    │   ├── services/
-    │   └── App.js
-    └── package.json
-```
-
-## Contributing
-Contributions are welcome. Open an issue or submit a pull request with improvements or fixes.
+## Notes
+- Legacy Mongo/Mongoose runtime dependencies are not required for the current backend runtime.
+- If old `MONGO_*` variables exist in local env files, they are not used by the active server code.
