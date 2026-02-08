@@ -89,11 +89,7 @@ export default function AdminDashboard() {
   );
 
   useEffect(() => {
-    let isMounted = true;
     fetchSnapshot();
-    return () => {
-      isMounted = false;
-    };
   }, [fetchSnapshot]);
 
   useEffect(() => {
