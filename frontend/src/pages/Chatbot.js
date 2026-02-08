@@ -1,7 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
+import { getUserRole } from '../utils/auth';
 import { PaperAirplaneIcon } from '@heroicons/react/solid';
 import { SparklesIcon } from '@heroicons/react/outline';
+
+const SUGGESTED_QUESTIONS = [
+  'How do I donate to a campaign and get a receipt?',
+  'Why is my certificate not available yet?',
+  'How do I volunteer for a campaign and share onboarding details?',
+  'How do volunteer opportunities and certificates work?',
+  'How can I message an NGO from the platform?'
+];
 
 const BotAvatar = () => (
   <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white">
@@ -15,11 +24,13 @@ const UserAvatar = () => (
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
-    { from: 'bot', text: "Welcome! I'm NGO Connect Bot. Ask me about registration, NGO recommendations, or how to use the platform!" }
+    { from: 'bot', text: "Welcome! I'm NGO Connect Bot.\n\nAsk me anything about using the platform: donations, volunteering, certificates, dashboards, and messages." }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const role = getUserRole() || 'guest';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -39,7 +50,21 @@ export default function Chatbot() {
     setLoading(true);
 
     try {
-      const res = await api.post('/ai/chat', { message: input });
+      const history = messages
+        .slice(-12)
+        .map((m) => ({
+          role: m.from === 'bot' ? 'assistant' : 'user',
+          content: m.text
+        }));
+
+      const res = await api.post('/ai/chat', {
+        message: input,
+        history,
+        clientContext: {
+          role,
+          path: window.location.pathname
+        }
+      });
       const botMessage = { from: 'bot', text: res.data.reply };
       setMessages(prev => [...prev, botMessage]);
     } catch (err) {
@@ -56,16 +81,33 @@ export default function Chatbot() {
         <BotAvatar />
         <div className="ml-4">
           <h2 className="text-xl font-bold">NGO Connect Bot</h2>
-          <p className="text-sm opacity-80">Your friendly assistant</p>
+          <p className="text-sm opacity-80">Your platform assistant {role !== 'guest' ? `(${role})` : ''}</p>
         </div>
       </div>
 
       <div className="flex-1 p-6 space-y-6 overflow-y-auto bg-gray-50">
+        <div className="flex flex-wrap gap-2">
+          {SUGGESTED_QUESTIONS.map((q) => (
+            <button
+              key={q}
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                setInput(q);
+                inputRef.current?.focus();
+              }}
+              className="text-xs px-3 py-1.5 rounded-full border border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 disabled:opacity-60"
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+
         {messages.map((m, i) => (
           <div key={i} className={`flex items-end gap-3 animate-fade-in-up ${m.from === 'bot' ? '' : 'flex-row-reverse'}`}>
             {m.from === 'bot' ? <BotAvatar /> : <UserAvatar />}
             <div className={`max-w-md p-4 rounded-2xl ${m.from === 'bot' ? 'bg-indigo-100 text-gray-800 rounded-bl-none' : 'bg-blue-500 text-white rounded-br-none'}`}>
-              <p className="text-sm">{m.text}</p>
+              <p className="text-sm whitespace-pre-wrap">{m.text}</p>
             </div>
           </div>
         ))}
@@ -87,6 +129,7 @@ export default function Chatbot() {
       <form onSubmit={send} className="p-4 border-t bg-white">
         <div className="flex items-center gap-3">
           <input
+            ref={inputRef}
             value={input}
             onChange={e => setInput(e.target.value)}
             disabled={loading}
