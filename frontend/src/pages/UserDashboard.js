@@ -18,6 +18,7 @@ import {
   getCertificateById,
   getDonationReceipt,
   getMyDonations,
+  getMyCampaignVolunteerRegistrations,
   getMyHelpRequests,
   getMyVolunteerApplications,
   getUserPreferences
@@ -100,6 +101,8 @@ export default function UserDashboard() {
   const [donationsLoading, setDonationsLoading] = useState(true);
   const [volunteerHistory, setVolunteerHistory] = useState([]);
   const [volunteerHistoryLoading, setVolunteerHistoryLoading] = useState(true);
+  const [campaignVolunteerRegistrations, setCampaignVolunteerRegistrations] = useState([]);
+  const [campaignVolunteerRegistrationsLoading, setCampaignVolunteerRegistrationsLoading] = useState(true);
   const [historyMessage, setHistoryMessage] = useState('');
 
   const [donationSearch, setDonationSearch] = useState('');
@@ -127,11 +130,13 @@ export default function UserDashboard() {
   const loadContributionHistory = useCallback(async () => {
     setDonationsLoading(true);
     setVolunteerHistoryLoading(true);
+    setCampaignVolunteerRegistrationsLoading(true);
     setHistoryMessage('');
 
-    const [donationsResult, volunteerResult] = await Promise.allSettled([
+    const [donationsResult, volunteerResult, campaignVolunteerResult] = await Promise.allSettled([
       getMyDonations(),
-      getMyVolunteerApplications()
+      getMyVolunteerApplications(),
+      getMyCampaignVolunteerRegistrations()
     ]);
 
     if (donationsResult.status === 'fulfilled') {
@@ -148,8 +153,16 @@ export default function UserDashboard() {
       setHistoryMessage((prev) => prev || 'Unable to load volunteer history right now.');
     }
 
+    if (campaignVolunteerResult.status === 'fulfilled') {
+      setCampaignVolunteerRegistrations(campaignVolunteerResult.value.data || []);
+    } else {
+      setCampaignVolunteerRegistrations([]);
+      setHistoryMessage((prev) => prev || 'Unable to load campaign volunteer registrations right now.');
+    }
+
     setDonationsLoading(false);
     setVolunteerHistoryLoading(false);
+    setCampaignVolunteerRegistrationsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -711,6 +724,103 @@ export default function UserDashboard() {
                     </table>
                   </div>
                 )}
+              </div>
+
+              <div className="mt-8">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">Campaign Volunteer Registrations</h3>
+                <div className="border rounded-lg overflow-hidden">
+                  {campaignVolunteerRegistrationsLoading ? (
+                    <p className="p-4 text-gray-600">Loading campaign volunteer registrations...</p>
+                  ) : campaignVolunteerRegistrations.length === 0 ? (
+                    <p className="p-4 text-gray-500">No campaign volunteer registrations found yet.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50 text-gray-600">
+                          <tr>
+                            <th className="text-left px-3 py-2">Date</th>
+                            <th className="text-left px-3 py-2">Campaign / NGO</th>
+                            <th className="text-left px-3 py-2">Status</th>
+                            <th className="text-left px-3 py-2">Certificate</th>
+                            <th className="text-left px-3 py-2">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {campaignVolunteerRegistrations.map((row, index) => {
+                            const registration = row?.registration || null;
+                            const createdAtValue = registration?.updatedAt || registration?.createdAt;
+                            const createdAt = createdAtValue ? new Date(createdAtValue) : null;
+                            const status = registration
+                              ? String(registration.certificateApprovalStatus || '').trim().toLowerCase() || 'pending'
+                              : (row?.joined ? 'missing_details' : 'not_registered');
+                            const hasCertificate = Boolean(getCertificateId(registration));
+
+                            return (
+                              <tr key={`${row?.campaign?.id || index}-${index}`} className="border-t">
+                                <td className="px-3 py-2">{createdAt && !Number.isNaN(createdAt.getTime()) ? createdAt.toLocaleDateString() : 'N/A'}</td>
+                                <td className="px-3 py-2">
+                                  <p className="font-medium text-gray-800">{row?.campaign?.title || 'Campaign'}</p>
+                                  <p className="text-xs text-gray-500">{row?.campaign?.ngo?.name || 'NGO'}</p>
+                                </td>
+                                <td className="px-3 py-2">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    status === 'approved'
+                                      ? 'bg-green-100 text-green-700'
+                                      : status === 'rejected'
+                                        ? 'bg-red-100 text-red-700'
+                                        : status === 'missing_details'
+                                          ? 'bg-gray-100 text-gray-700'
+                                          : 'bg-amber-100 text-amber-800'
+                                  }`}>
+                                    {status === 'missing_details' ? 'Missing details' : status}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-2 text-xs">
+                                  {hasCertificate ? (
+                                    <span className="text-green-700 font-semibold">Issued</span>
+                                  ) : status === 'pending' ? (
+                                    <span className="text-gray-600">Pending</span>
+                                  ) : (
+                                    <span className="text-gray-500">-</span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-2">
+                                  <div className="flex flex-wrap gap-3">
+                                    {hasCertificate && (
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          setHistoryMessage('');
+                                          try {
+                                            const certificateId = getCertificateId(registration);
+                                            const certificateRes = await getCertificateById(certificateId);
+                                            const opened = openHtmlDocument(certificateRes?.data?.html || '<p>Unable to load certificate.</p>');
+                                            if (!opened) setHistoryMessage('Please allow popups to view the certificate.');
+                                          } catch (err) {
+                                            setHistoryMessage('Failed to open certificate.');
+                                          }
+                                        }}
+                                        className="text-indigo-600 font-semibold hover:underline"
+                                      >
+                                        View Certificate
+                                      </button>
+                                    )}
+                                    <Link
+                                      to={`/campaigns/${row?.campaign?.id}`}
+                                      className="text-indigo-600 font-semibold hover:underline"
+                                    >
+                                      {registration ? 'View / Update' : 'Submit Details'}
+                                    </Link>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

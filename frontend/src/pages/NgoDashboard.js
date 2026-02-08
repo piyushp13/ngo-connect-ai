@@ -5,6 +5,7 @@ import api, {
   getMessageConversations,
   getNgoDonationApprovalQueue,
   getNgoDonationTransactions,
+  reviewCampaignVolunteerRegistration,
   getNgoVolunteerApprovalQueue,
   getNgoVolunteerRequests,
   reviewDonationCertificateRequest,
@@ -43,7 +44,8 @@ export default function NgoDashboard() {
   const [campaignVolunteerSummary, setCampaignVolunteerSummary] = useState({
     campaignsCount: 0,
     totalVolunteers: 0,
-    totalRegistrations: 0
+    totalRegistrations: 0,
+    pendingCertificateCount: 0
   });
   const [campaignVolunteers, setCampaignVolunteers] = useState([]);
 
@@ -61,8 +63,11 @@ export default function NgoDashboard() {
   );
 
   const pendingCertificateTotal = useMemo(
-    () => Number(donationSummary.pendingCertificateCount || 0) + Number(volunteerSummary.pendingCertificateCount || 0),
-    [donationSummary, volunteerSummary]
+    () =>
+      Number(donationSummary.pendingCertificateCount || 0) +
+      Number(volunteerSummary.pendingCertificateCount || 0) +
+      Number(campaignVolunteerSummary.pendingCertificateCount || 0),
+    [donationSummary, volunteerSummary, campaignVolunteerSummary]
   );
 
   const isVerified = ngo?.verified;
@@ -116,7 +121,8 @@ export default function NgoDashboard() {
       setCampaignVolunteerSummary(campaignVolunteersRes.data?.summary || {
         campaignsCount: 0,
         totalVolunteers: 0,
-        totalRegistrations: 0
+        totalRegistrations: 0,
+        pendingCertificateCount: 0
       });
       setCampaignVolunteers(campaignVolunteersRes.data?.volunteers || []);
 
@@ -129,7 +135,7 @@ export default function NgoDashboard() {
       setDonationTransactions([]);
       setVolunteerSummary({ totalRequests: 0, appliedCount: 0, assignedCount: 0, completedCount: 0, withdrawnCount: 0, pendingCertificateCount: 0 });
       setVolunteerRequests([]);
-      setCampaignVolunteerSummary({ campaignsCount: 0, totalVolunteers: 0, totalRegistrations: 0 });
+      setCampaignVolunteerSummary({ campaignsCount: 0, totalVolunteers: 0, totalRegistrations: 0, pendingCertificateCount: 0 });
       setCampaignVolunteers([]);
       setMessageUnreadCount(0);
     } finally {
@@ -171,6 +177,21 @@ export default function NgoDashboard() {
       await Promise.all([loadApprovals(), loadDashboardData()]);
     } catch (err) {
       setApprovalMessage(err.response?.data?.message || 'Failed to update volunteer certificate status.');
+    }
+  };
+
+  const handleCampaignVolunteerDecision = async (campaignId, userId, decision) => {
+    try {
+      const noteKey = `campaign-volunteer-${campaignId}-${userId}`;
+      await reviewCampaignVolunteerRegistration(campaignId, {
+        userId,
+        decision,
+        note: approvalNotes[noteKey] || ''
+      });
+      setApprovalMessage(`Campaign volunteer ${decision === 'approve' ? 'approved' : 'rejected'} successfully.`);
+      await loadDashboardData();
+    } catch (err) {
+      setApprovalMessage(err.response?.data?.message || 'Failed to update campaign volunteer status.');
     }
   };
 
@@ -460,12 +481,14 @@ export default function NgoDashboard() {
                   <th className="text-left px-3 py-2">Submitted</th>
                   <th className="text-left px-3 py-2">Preferred Activities</th>
                   <th className="text-left px-3 py-2">Availability</th>
+                  <th className="text-left px-3 py-2">Status</th>
+                  <th className="text-left px-3 py-2">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {campaignVolunteers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-gray-500">No campaign volunteer registrations found.</td>
+                    <td colSpan={7} className="px-3 py-6 text-center text-gray-500">No campaign volunteer registrations found.</td>
                   </tr>
                 ) : (
                   campaignVolunteers.map((item, index) => {
@@ -474,6 +497,11 @@ export default function NgoDashboard() {
                     const activities = Array.isArray(registration?.preferredActivities)
                       ? registration.preferredActivities.filter(Boolean).join(', ')
                       : '';
+                    const approvalStatus = registration
+                      ? String(registration.certificateApprovalStatus || '').trim().toLowerCase() || 'pending'
+                      : 'missing_details';
+                    const noteKey = `campaign-volunteer-${item.campaign?.id || ''}-${item.user?.id || item.userId || index}`;
+                    const hasCertificate = Boolean(registration?.certificate);
                     return (
                       <tr key={`${item.user?.id || item.userId || index}-${item.campaign?.id || index}`} className="border-t border-gray-100">
                         <td className="px-3 py-2 text-gray-800">
@@ -490,6 +518,67 @@ export default function NgoDashboard() {
                         <td className="px-3 py-2 text-gray-700">{submittedAt ? when(submittedAt) : 'N/A'}</td>
                         <td className="px-3 py-2 text-gray-700">{activities || (registration ? '-' : 'Joined (no form details)')}</td>
                         <td className="px-3 py-2 text-gray-700">{registration?.availability || '-'}</td>
+                        <td className="px-3 py-2 text-gray-700">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold border ${
+                            approvalStatus === 'approved'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : approvalStatus === 'rejected'
+                                ? 'bg-red-50 text-red-700 border-red-200'
+                                : approvalStatus === 'pending'
+                                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                  : 'bg-gray-50 text-gray-700 border-gray-200'
+                          }`}>
+                            {approvalStatus === 'missing_details' ? 'Missing details' : approvalStatus}
+                          </span>
+                          {approvalStatus === 'missing_details' && (
+                            <p className="mt-1 text-xs text-gray-500">Volunteer joined but onboarding form not submitted.</p>
+                          )}
+                          {registration?.certificateApprovalNote && approvalStatus !== 'pending' && (
+                            <p className="mt-1 text-xs text-gray-600">Note: {registration.certificateApprovalNote}</p>
+                          )}
+                          <p className="mt-1 text-xs text-gray-500">
+                            Certificate:{' '}
+                            {hasCertificate ? (
+                              <span className="text-emerald-700 font-semibold">Issued</span>
+                            ) : approvalStatus === 'pending' ? (
+                              <span className="text-gray-600">Pending</span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </p>
+                        </td>
+                        <td className="px-3 py-2 text-gray-700">
+                          {approvalStatus === 'pending' && registration ? (
+                            <div className="min-w-[240px] space-y-2">
+                              <textarea
+                                rows={2}
+                                value={approvalNotes[noteKey] || ''}
+                                onChange={(e) => handleApprovalNoteChange(noteKey, e.target.value)}
+                                placeholder="Optional note for the volunteer"
+                                className="w-full border border-gray-300 rounded-md p-2 text-xs"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCampaignVolunteerDecision(item.campaign?.id, item.user?.id || item.userId, 'approve')}
+                                  className="px-3 py-2 text-xs bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCampaignVolunteerDecision(item.campaign?.id, item.user?.id || item.userId, 'reject')}
+                                  className="px-3 py-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">-</span>
+                          )
+                          }
+                        </td>
                       </tr>
                     );
                   })
