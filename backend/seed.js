@@ -725,6 +725,622 @@ const ngoSeeds = [
       financial: true,
       beneficiary: true
     }
+  },
+  {
+    slug: 'namma-lake-guardians',
+    name: 'Namma Lake Guardians',
+    email: 'lakeguardians@ngo.org',
+    categories: ['Environment', 'Urban Sanitation'],
+    mission: 'To restore Bengaluru lakes through citizen science, clean-up drives, and long-term lake stewardship programs.',
+    vision: 'Every neighbourhood in Bengaluru has a healthy, accessible, and thriving lake ecosystem.',
+    description: 'Namma Lake Guardians works with local communities and civic partners to rehabilitate lakes, improve biodiversity, and reduce waste inflow.',
+    about: 'The collective runs monthly lake clean-ups, water quality sampling, and community workshops with lake committees. It maintains public dashboards for water quality, waste hotspots, and volunteer engagement.',
+    impact: 'Volunteer stewardship combined with data-driven lake monitoring helps sustain long-term improvements beyond one-off cleanups.',
+    helplineNumber: '080-4200-3311',
+    registrationId: 'NGO-KA-NLG-2021',
+    address: 'Outer Ring Road, Bellandur, Bengaluru, Karnataka 560103',
+    addressDetails: {
+      houseNumber: '18',
+      landmark: 'Near Bellandur Lake Gate',
+      district: 'Bengaluru Urban',
+      state: 'Karnataka',
+      pincode: '560103'
+    },
+    location: { type: 'Point', coordinates: [77.6764, 12.9306] },
+    geographies: ['Bellandur', 'HSR Layout', 'Koramangala', 'Bengaluru'],
+    offices: ['Bengaluru'],
+    website: 'https://www.nammalakeguardians.org',
+    logo: imageUrl('nlg-logo', 300, 300),
+    coverImage: imageUrl('nlg-cover'),
+    gallery: [imageUrl('nlg-gallery-1'), imageUrl('nlg-gallery-2'), imageUrl('nlg-gallery-3')],
+    videos: ['https://www.youtube.com/watch?v=uyDGfueQ49w'],
+    badges: ['80G', '12A', 'CSR-1'],
+    certifications: ['Lake Stewardship Partner 2025'],
+    awards: ['Bengaluru Urban Ecology Award 2025'],
+    testimonials: [
+      {
+        name: 'Rashmi S',
+        role: 'Lake Committee Member, Bellandur',
+        quote: 'Public monitoring dashboards helped our committee act quickly on new waste inflow points.'
+      }
+    ],
+    transparency: 'Silver Certified 2025',
+    primarySectors: ['Environment', 'Urban Sanitation'],
+    secondarySectors: ['Waterbodies', 'Citizen Science', 'Waste Management'],
+    financials: buildFinancials({ baseIncome: 16500000, baseExpense: 14100000 }),
+    programs: [
+      {
+        name: 'Lake Clean-up Drives',
+        img: imageUrl('nlg-program-1', 640, 420),
+        desc: 'Monthly clean-up events and shoreline restoration tasks with volunteer crews.'
+      },
+      {
+        name: 'Water Quality Citizen Lab',
+        img: imageUrl('nlg-program-2', 640, 420),
+        desc: 'Community-led sampling and reporting of key water quality indicators.'
+      }
+    ],
+    impactMetrics: [
+      '18 lake clean-ups delivered across Bengaluru in the last 12 months',
+      '8 lake committees supported with monitoring dashboards',
+      '62 waste hotspots identified and mapped for civic action'
+    ],
+    leadership: [
+      { name: 'Anirudh N', role: 'Program Lead - Lakes', linkedin: 'https://www.linkedin.com' },
+      { name: 'Shreya K', role: 'Community Partnerships', linkedin: 'https://www.linkedin.com' }
+    ],
+    orgStrength: 26,
+    orgStructure: 'Trust',
+    registration: {
+      pan: 'AAATN7711K',
+      regNo: 'BLR-TRUST-2021-512',
+      csr: 'CSR00009011',
+      g80: 'AAATN7711KF20241',
+      a12: 'AAATN7711KE20241',
+      fcra: 'NA'
+    },
+    type: 'Non-profit',
+    subType: 'Trust',
+    socials: {
+      youtube: 'https://www.youtube.com',
+      linkedin: 'https://www.linkedin.com',
+      facebook: 'https://www.facebook.com',
+      instagram: 'https://www.instagram.com',
+      twitter: 'https://twitter.com'
+    },
+    tech: {
+      soc2: false,
+      financial: true,
+      beneficiary: true
+    }
+  },
+  {
+    slug: 'bengaluru-digital-literacy',
+    name: 'Bengaluru Digital Literacy Mission',
+    email: 'digitalliteracy@ngo.org',
+    categories: ['Education', 'Skilling'],
+    mission: 'To bridge the digital divide in Bengaluru by enabling practical computer and job-readiness skills for youth and women.',
+    vision: 'Digital skills for every household in Bengaluru, regardless of income or access.',
+    description: 'The mission runs community labs, mobile training units, and employability bootcamps across Bengaluru.',
+    about: 'Programs include foundational digital literacy, resume and interview preparation, and guided pathways to apprenticeships. The mission collaborates with colleges, community centres, and CSR partners.',
+    impact: 'Participants gain confidence using essential digital services and can access better employment opportunities.',
+    helplineNumber: '080-4211-7744',
+    registrationId: 'NGO-KA-BDLM-2020',
+    address: '17th Cross, Sector 6, HSR Layout, Bengaluru, Karnataka 560102',
+    addressDetails: {
+      houseNumber: '44',
+      landmark: 'Near HSR BDA Complex',
+      district: 'Bengaluru Urban',
+      state: 'Karnataka',
+      pincode: '560102'
+    },
+    location: { type: 'Point', coordinates: [77.6413, 12.9116] },
+    geographies: ['HSR Layout', 'KR Puram', 'Marathahalli', 'Bengaluru'],
+    offices: ['Bengaluru', 'Tumakuru'],
+    website: 'https://www.bdmission.org',
+    logo: imageUrl('bdlm-logo', 300, 300),
+    coverImage: imageUrl('bdlm-cover'),
+    gallery: [imageUrl('bdlm-gallery-1'), imageUrl('bdlm-gallery-2'), imageUrl('bdlm-gallery-3')],
+    videos: ['https://www.youtube.com/watch?v=8jPQjjsBbIc'],
+    badges: ['80G', '12A', 'CSR-1'],
+    certifications: ['NSDC Partner 2025'],
+    awards: ['Karnataka Digital Inclusion Award 2024'],
+    testimonials: [
+      {
+        name: 'Suma J',
+        role: 'Alumna, KR Puram Bootcamp',
+        quote: 'The lab sessions helped me apply for jobs online and prepare for interviews.'
+      }
+    ],
+    transparency: 'Gold Certified 2025',
+    primarySectors: ['Education', 'Skilling'],
+    secondarySectors: ['Employability', 'Digital Inclusion'],
+    financials: buildFinancials({ baseIncome: 22000000, baseExpense: 19700000 }),
+    programs: [
+      {
+        name: 'Neighbourhood Digital Labs',
+        img: imageUrl('bdlm-program-1', 640, 420),
+        desc: 'Local computer labs with trainers, practice tracks, and curated learning plans.'
+      },
+      {
+        name: 'Job Readiness Bootcamps',
+        img: imageUrl('bdlm-program-2', 640, 420),
+        desc: 'Short-term training with placement support and interview preparation.'
+      }
+    ],
+    impactMetrics: [
+      '3,100 learners trained in Bengaluru in the last year',
+      '68% participants progressed to internships or jobs within 90 days',
+      '19 community labs operated with local partner institutions'
+    ],
+    leadership: [
+      { name: 'Ravi S', role: 'Director - Programs', linkedin: 'https://www.linkedin.com' },
+      { name: 'Nandini P', role: 'Head - Partnerships', linkedin: 'https://www.linkedin.com' }
+    ],
+    orgStrength: 62,
+    orgStructure: 'Section 8 Company',
+    registration: {
+      pan: 'AAATB2222R',
+      regNo: 'BLR-S8-2020-821',
+      csr: 'CSR00009122',
+      g80: 'AAATB2222RF20241',
+      a12: 'AAATB2222RE20241',
+      fcra: 'NA'
+    },
+    type: 'Non-profit',
+    subType: 'Section 8',
+    socials: {
+      youtube: 'https://www.youtube.com',
+      linkedin: 'https://www.linkedin.com',
+      facebook: 'https://www.facebook.com',
+      instagram: 'https://www.instagram.com',
+      twitter: 'https://twitter.com'
+    },
+    tech: {
+      soc2: false,
+      financial: true,
+      beneficiary: true
+    }
+  },
+  {
+    slug: 'womenworks-bengaluru',
+    name: 'WomenWorks Bengaluru Collective',
+    email: 'womenworks@ngo.org',
+    categories: ['Women', 'Livelihood', 'Skilling'],
+    mission: 'To enable dignified livelihoods for women in Bengaluru through skills training, entrepreneurship support, and market linkages.',
+    vision: 'Every woman in Bengaluru has access to economic opportunity and safe workplaces.',
+    description: 'WomenWorks runs micro-enterprise accelerators, job placement partnerships, and financial literacy programs for women.',
+    about: 'The collective partners with SHGs, local businesses, and training institutes. Programs include tailoring and food processing units, digital commerce onboarding, and mentorship networks.',
+    impact: 'Participants build stable incomes, improve savings habits, and access supportive peer networks.',
+    helplineNumber: '080-4142-9090',
+    registrationId: 'NGO-KA-WWB-2018',
+    address: '4th Block, Jayanagar, Bengaluru, Karnataka 560011',
+    addressDetails: {
+      houseNumber: '55',
+      landmark: 'Near Jayanagar 4th Block Market',
+      district: 'Bengaluru Urban',
+      state: 'Karnataka',
+      pincode: '560011'
+    },
+    location: { type: 'Point', coordinates: [77.5838, 12.9279] },
+    geographies: ['Jayanagar', 'JP Nagar', 'Banashankari', 'Bengaluru'],
+    offices: ['Bengaluru'],
+    website: 'https://www.womenworksblr.org',
+    logo: imageUrl('wwb-logo', 300, 300),
+    coverImage: imageUrl('wwb-cover'),
+    gallery: [imageUrl('wwb-gallery-1'), imageUrl('wwb-gallery-2'), imageUrl('wwb-gallery-3')],
+    videos: ['https://www.youtube.com/watch?v=8jPQjjsBbIc'],
+    badges: ['80G', '12A'],
+    certifications: ['Skill India Partner 2025'],
+    awards: ['Women Entrepreneurship Catalyst Award 2024'],
+    testimonials: [
+      {
+        name: 'Farzana A',
+        role: 'Entrepreneur, Jayanagar',
+        quote: 'The mentoring and market linkage support helped me scale my home bakery orders.'
+      }
+    ],
+    transparency: 'Silver Certified 2025',
+    primarySectors: ['Women', 'Livelihood'],
+    secondarySectors: ['Entrepreneurship', 'Financial Literacy', 'Skilling'],
+    financials: buildFinancials({ baseIncome: 14500000, baseExpense: 12700000 }),
+    programs: [
+      {
+        name: 'Micro-Enterprise Accelerator',
+        img: imageUrl('wwb-program-1', 640, 420),
+        desc: 'Mentorship and business support for women-led enterprises.'
+      },
+      {
+        name: 'Workplace Readiness',
+        img: imageUrl('wwb-program-2', 640, 420),
+        desc: 'Job readiness and placement support with partner employers.'
+      }
+    ],
+    impactMetrics: [
+      '740 women completed skilling tracks in the last year',
+      '210 micro-enterprises supported through market linkage partnerships',
+      'Average household income increased by 18% in partner clusters'
+    ],
+    leadership: [
+      { name: 'Madhuri R', role: 'Executive Director', linkedin: 'https://www.linkedin.com' },
+      { name: 'Sneha V', role: 'Head - Livelihoods', linkedin: 'https://www.linkedin.com' }
+    ],
+    orgStrength: 34,
+    orgStructure: 'Trust',
+    registration: {
+      pan: 'AAATW3333M',
+      regNo: 'BLR-TRUST-2018-332',
+      csr: 'CSR00009133',
+      g80: 'AAATW3333MF20241',
+      a12: 'AAATW3333ME20241',
+      fcra: 'NA'
+    },
+    type: 'Non-profit',
+    subType: 'Trust',
+    socials: {
+      youtube: 'https://www.youtube.com',
+      linkedin: 'https://www.linkedin.com',
+      facebook: 'https://www.facebook.com',
+      instagram: 'https://www.instagram.com',
+      twitter: 'https://twitter.com'
+    },
+    tech: {
+      soc2: false,
+      financial: true,
+      beneficiary: true
+    }
+  },
+  {
+    slug: 'swasthya-seva-bengaluru',
+    name: 'Swasthya Seva Health Foundation',
+    email: 'swasthyaseva@ngo.org',
+    categories: ['Health', 'Medical Support'],
+    mission: 'To strengthen community health access in Bengaluru through preventive screenings, referral networks, and health education.',
+    vision: 'Quality preventive healthcare is accessible and affordable for every Bengaluru neighbourhood.',
+    description: 'Swasthya Seva conducts health camps, runs patient navigation support, and coordinates with partner hospitals for referrals.',
+    about: 'The foundation focuses on preventive screenings for diabetes, hypertension, and anaemia. It also trains local health volunteers to guide families on follow-up care and nutrition awareness.',
+    impact: 'Early detection and structured follow-ups reduce complications and improve overall health outcomes for vulnerable families.',
+    helplineNumber: '080-4100-8088',
+    registrationId: 'NGO-KA-SSH-2017',
+    address: 'ITPL Main Road, Whitefield, Bengaluru, Karnataka 560066',
+    addressDetails: {
+      houseNumber: '12',
+      landmark: 'Near ITPL Gate 2',
+      district: 'Bengaluru Urban',
+      state: 'Karnataka',
+      pincode: '560066'
+    },
+    location: { type: 'Point', coordinates: [77.7509, 12.9698] },
+    geographies: ['Whitefield', 'KR Puram', 'Mahadevapura', 'Bengaluru'],
+    offices: ['Bengaluru'],
+    website: 'https://www.swasthyaseva.org',
+    logo: imageUrl('ssh-logo', 300, 300),
+    coverImage: imageUrl('ssh-cover'),
+    gallery: [imageUrl('ssh-gallery-1'), imageUrl('ssh-gallery-2'), imageUrl('ssh-gallery-3')],
+    videos: ['https://www.youtube.com/watch?v=8jPQjjsBbIc'],
+    badges: ['80G', '12A'],
+    certifications: ['Community Health Partner 2025'],
+    awards: ['Bengaluru Preventive Care Award 2024'],
+    testimonials: [
+      {
+        name: 'Dr. Sunil K',
+        role: 'Partner Hospital Coordinator',
+        quote: 'Referral coordination improved follow-up adherence in our outreach patients.'
+      }
+    ],
+    transparency: 'Silver Certified 2025',
+    primarySectors: ['Health', 'Medical Support'],
+    secondarySectors: ['Preventive Care', 'Patient Navigation'],
+    financials: buildFinancials({ baseIncome: 17800000, baseExpense: 16200000 }),
+    programs: [
+      {
+        name: 'Neighbourhood Health Camps',
+        img: imageUrl('ssh-program-1', 640, 420),
+        desc: 'Preventive screening camps with referral and follow-up support.'
+      },
+      {
+        name: 'Community Health Volunteers',
+        img: imageUrl('ssh-program-2', 640, 420),
+        desc: 'Volunteer training for health awareness and patient follow-up assistance.'
+      }
+    ],
+    impactMetrics: [
+      '9,200 screenings delivered across Bengaluru in the last year',
+      '1,140 referrals coordinated for follow-up treatment',
+      '72 community health volunteers trained and active'
+    ],
+    leadership: [
+      { name: 'Dr. Kavya N', role: 'Medical Director', linkedin: 'https://www.linkedin.com' },
+      { name: 'Harish P', role: 'Operations Lead', linkedin: 'https://www.linkedin.com' }
+    ],
+    orgStrength: 41,
+    orgStructure: 'Society',
+    registration: {
+      pan: 'AAATS4444Q',
+      regNo: 'BLR-SOC-2017-901',
+      csr: 'CSR00009144',
+      g80: 'AAATS4444QF20241',
+      a12: 'AAATS4444QE20241',
+      fcra: 'NA'
+    },
+    type: 'Non-profit',
+    subType: 'Society',
+    socials: {
+      youtube: 'https://www.youtube.com',
+      linkedin: 'https://www.linkedin.com',
+      facebook: 'https://www.facebook.com',
+      instagram: 'https://www.instagram.com',
+      twitter: 'https://twitter.com'
+    },
+    tech: {
+      soc2: false,
+      financial: true,
+      beneficiary: true
+    }
+  },
+  {
+    slug: 'accessible-bengaluru',
+    name: 'Accessible Bengaluru Initiative',
+    email: 'accessibleblr@ngo.org',
+    categories: ['Disability Inclusion', 'Human Rights'],
+    mission: 'To advance accessibility in Bengaluru through audits, advocacy, and inclusive community design.',
+    vision: 'A barrier-free Bengaluru where public spaces and services are accessible to everyone.',
+    description: 'The initiative conducts accessibility audits and works with civic stakeholders to improve public infrastructure inclusivity.',
+    about: 'Programs include mobility audits of bus stops and metro stations, assistive tech awareness sessions, and disability inclusion workshops for institutions and employers.',
+    impact: 'Evidence-based audits and structured follow-ups enable measurable improvements in public infrastructure accessibility.',
+    helplineNumber: '080-4133-2112',
+    registrationId: 'NGO-KA-ABI-2022',
+    address: '100 Feet Road, Indiranagar, Bengaluru, Karnataka 560038',
+    addressDetails: {
+      houseNumber: '9',
+      landmark: 'Near Indiranagar Metro Station',
+      district: 'Bengaluru Urban',
+      state: 'Karnataka',
+      pincode: '560038'
+    },
+    location: { type: 'Point', coordinates: [77.6403, 12.9784] },
+    geographies: ['Indiranagar', 'MG Road', 'Bengaluru'],
+    offices: ['Bengaluru'],
+    website: 'https://www.accessiblebengaluru.org',
+    logo: imageUrl('abi-logo', 300, 300),
+    coverImage: imageUrl('abi-cover'),
+    gallery: [imageUrl('abi-gallery-1'), imageUrl('abi-gallery-2'), imageUrl('abi-gallery-3')],
+    videos: ['https://www.youtube.com/watch?v=uyDGfueQ49w'],
+    badges: ['80G', '12A'],
+    certifications: ['Accessibility Audit Partner 2025'],
+    awards: ['Inclusive City Award 2024'],
+    testimonials: [
+      {
+        name: 'Suresh L',
+        role: 'Wheelchair User, Indiranagar',
+        quote: 'The audit reports helped prioritize ramps and signage fixes at key stations.'
+      }
+    ],
+    transparency: 'Gold Certified 2025',
+    primarySectors: ['Disability Inclusion', 'Human Rights'],
+    secondarySectors: ['Accessibility Audits', 'Advocacy'],
+    financials: buildFinancials({ baseIncome: 9800000, baseExpense: 8600000 }),
+    programs: [
+      {
+        name: 'Public Transport Accessibility Audits',
+        img: imageUrl('abi-program-1', 640, 420),
+        desc: 'Evidence-based audits and issue tracking for metro stations and bus stops.'
+      },
+      {
+        name: 'Inclusion Workshops',
+        img: imageUrl('abi-program-2', 640, 420),
+        desc: 'Workshops for institutions and employers on disability inclusion practices.'
+      }
+    ],
+    impactMetrics: [
+      '64 public transport hubs audited with issue trackers',
+      '18 access improvements delivered via civic partner follow-ups',
+      '560+ participants reached through inclusion workshops'
+    ],
+    leadership: [
+      { name: 'Neelima S', role: 'Founder', linkedin: 'https://www.linkedin.com' },
+      { name: 'Prashanth J', role: 'Research Lead', linkedin: 'https://www.linkedin.com' }
+    ],
+    orgStrength: 19,
+    orgStructure: 'Trust',
+    registration: {
+      pan: 'AAATA5555P',
+      regNo: 'BLR-TRUST-2022-115',
+      csr: 'CSR00009155',
+      g80: 'AAATA5555PF20241',
+      a12: 'AAATA5555PE20241',
+      fcra: 'NA'
+    },
+    type: 'Non-profit',
+    subType: 'Trust',
+    socials: {
+      youtube: 'https://www.youtube.com',
+      linkedin: 'https://www.linkedin.com',
+      facebook: 'https://www.facebook.com',
+      instagram: 'https://www.instagram.com',
+      twitter: 'https://twitter.com'
+    },
+    tech: {
+      soc2: false,
+      financial: true,
+      beneficiary: true
+    }
+  },
+  {
+    slug: 'namma-street-care',
+    name: 'Namma Street Care Trust',
+    email: 'streetcare@ngo.org',
+    categories: ['Urban Sanitation', 'Environment'],
+    mission: 'To improve cleanliness and waste segregation practices in dense Bengaluru neighbourhoods through community-led action.',
+    vision: 'Cleaner streets and better waste outcomes for every Bengaluru ward.',
+    description: 'Namma Street Care runs door-to-door awareness drives, waste segregation demos, and ward-level cleanup events.',
+    about: 'The trust works with resident groups, market associations, and civic partners to reduce littering hotspots and improve segregation compliance.',
+    impact: 'Consistent community outreach and ward action plans lead to sustained sanitation improvements.',
+    helplineNumber: '080-4099-7701',
+    registrationId: 'NGO-KA-NSC-2019',
+    address: 'Russell Market Road, Shivajinagar, Bengaluru, Karnataka 560001',
+    addressDetails: {
+      houseNumber: '77',
+      landmark: 'Near Russell Market',
+      district: 'Bengaluru Urban',
+      state: 'Karnataka',
+      pincode: '560001'
+    },
+    location: { type: 'Point', coordinates: [77.6046, 12.9836] },
+    geographies: ['Shivajinagar', 'Commercial Street', 'Bengaluru'],
+    offices: ['Bengaluru'],
+    website: 'https://www.nammastreetcare.org',
+    logo: imageUrl('nsc-logo', 300, 300),
+    coverImage: imageUrl('nsc-cover'),
+    gallery: [imageUrl('nsc-gallery-1'), imageUrl('nsc-gallery-2'), imageUrl('nsc-gallery-3')],
+    videos: ['https://www.youtube.com/watch?v=uyDGfueQ49w'],
+    badges: ['80G', '12A'],
+    certifications: ['Ward Sanitation Partner 2025'],
+    awards: ['BBMP Clean Ward Collaboration 2024'],
+    testimonials: [
+      {
+        name: 'Imran K',
+        role: 'Market Association Member',
+        quote: 'Segregation demos made it easier for vendors to follow daily collection rules.'
+      }
+    ],
+    transparency: 'Silver Certified 2025',
+    primarySectors: ['Urban Sanitation', 'Environment'],
+    secondarySectors: ['Waste Segregation', 'Community Outreach'],
+    financials: buildFinancials({ baseIncome: 8400000, baseExpense: 7200000 }),
+    programs: [
+      {
+        name: 'Segregation Champions',
+        img: imageUrl('nsc-program-1', 640, 420),
+        desc: 'Ward-level volunteer champions driving waste segregation awareness.'
+      },
+      {
+        name: 'Clean Market Initiative',
+        img: imageUrl('nsc-program-2', 640, 420),
+        desc: 'Waste management support for markets and vendor clusters.'
+      }
+    ],
+    impactMetrics: [
+      '12 wards supported with segregation awareness programs',
+      '5 market clusters onboarded with daily compliance checklists',
+      '28 cleanup events delivered with community partners'
+    ],
+    leadership: [
+      { name: 'Shabnam M', role: 'Program Director', linkedin: 'https://www.linkedin.com' },
+      { name: 'Kiran B', role: 'Field Operations Lead', linkedin: 'https://www.linkedin.com' }
+    ],
+    orgStrength: 22,
+    orgStructure: 'Society',
+    registration: {
+      pan: 'AAATN6666S',
+      regNo: 'BLR-SOC-2019-441',
+      csr: 'CSR00009166',
+      g80: 'AAATN6666SF20241',
+      a12: 'AAATN6666SE20241',
+      fcra: 'NA'
+    },
+    type: 'Non-profit',
+    subType: 'Society',
+    socials: {
+      youtube: 'https://www.youtube.com',
+      linkedin: 'https://www.linkedin.com',
+      facebook: 'https://www.facebook.com',
+      instagram: 'https://www.instagram.com',
+      twitter: 'https://twitter.com'
+    },
+    tech: {
+      soc2: false,
+      financial: true,
+      beneficiary: true
+    }
+  },
+  {
+    slug: 'bengaluru-food-rescue',
+    name: 'Bengaluru Food Rescue Alliance',
+    email: 'foodrescue@ngo.org',
+    categories: ['Hunger', 'Children'],
+    mission: 'To reduce food waste in Bengaluru by rescuing surplus food and delivering it safely to communities in need.',
+    vision: 'No edible food wasted in Bengaluru while families remain hungry.',
+    description: 'The alliance operates a surplus-food pickup network and coordinates distribution partners across Bengaluru.',
+    about: 'The team works with restaurants, corporate cafeterias, and event venues to collect surplus food. It follows safety SOPs and uses a hub-and-spoke distribution model with partner shelters.',
+    impact: 'Surplus redistribution reduces food waste and improves meal access for vulnerable families.',
+    helplineNumber: '080-4044-1122',
+    registrationId: 'NGO-KA-BFRA-2021',
+    address: '80 Feet Road, Koramangala, Bengaluru, Karnataka 560034',
+    addressDetails: {
+      houseNumber: '21',
+      landmark: 'Near Koramangala 4th Block',
+      district: 'Bengaluru Urban',
+      state: 'Karnataka',
+      pincode: '560034'
+    },
+    location: { type: 'Point', coordinates: [77.6245, 12.9352] },
+    geographies: ['Koramangala', 'HSR Layout', 'BTM Layout', 'Bengaluru'],
+    offices: ['Bengaluru'],
+    website: 'https://www.bengalurufoodrescue.org',
+    logo: imageUrl('bfra-logo', 300, 300),
+    coverImage: imageUrl('bfra-cover'),
+    gallery: [imageUrl('bfra-gallery-1'), imageUrl('bfra-gallery-2'), imageUrl('bfra-gallery-3')],
+    videos: ['https://www.youtube.com/watch?v=8jPQjjsBbIc'],
+    badges: ['80G', '12A'],
+    certifications: ['Food Safety SOP Partner 2025'],
+    awards: ['Bengaluru Food Waste Reduction Award 2024'],
+    testimonials: [
+      {
+        name: 'Joseph M',
+        role: 'Shelter Coordinator',
+        quote: 'Daily surplus pickups made our evening meal service reliable throughout the month.'
+      }
+    ],
+    transparency: 'Gold Certified 2025',
+    primarySectors: ['Hunger', 'Child Welfare'],
+    secondarySectors: ['Food Waste', 'Community Kitchens'],
+    financials: buildFinancials({ baseIncome: 12000000, baseExpense: 10400000 }),
+    programs: [
+      {
+        name: 'Surplus Pickup Network',
+        img: imageUrl('bfra-program-1', 640, 420),
+        desc: 'Daily surplus pickup coordination and safe storage handoffs.'
+      },
+      {
+        name: 'Community Meal Distribution',
+        img: imageUrl('bfra-program-2', 640, 420),
+        desc: 'Distribution partnerships with shelters and community kitchens.'
+      }
+    ],
+    impactMetrics: [
+      '1.1 million meals rescued and redistributed in the last 12 months',
+      '240+ food donors onboarded across Bengaluru',
+      'Average daily distribution reach: 3,400 beneficiaries'
+    ],
+    leadership: [
+      { name: 'Arvind J', role: 'Operations Head', linkedin: 'https://www.linkedin.com' },
+      { name: 'Anusha R', role: 'Partnerships Lead', linkedin: 'https://www.linkedin.com' }
+    ],
+    orgStrength: 29,
+    orgStructure: 'Section 8 Company',
+    registration: {
+      pan: 'AAATB7777D',
+      regNo: 'BLR-S8-2021-215',
+      csr: 'CSR00009177',
+      g80: 'AAATB7777DF20241',
+      a12: 'AAATB7777DE20241',
+      fcra: 'NA'
+    },
+    type: 'Non-profit',
+    subType: 'Section 8',
+    socials: {
+      youtube: 'https://www.youtube.com',
+      linkedin: 'https://www.linkedin.com',
+      facebook: 'https://www.facebook.com',
+      instagram: 'https://www.instagram.com',
+      twitter: 'https://twitter.com'
+    },
+    tech: {
+      soc2: false,
+      financial: true,
+      beneficiary: true
+    }
   }
 ];
 
@@ -1112,20 +1728,223 @@ const campaignSeeds = [
     coordinator: { name: 'Prakash B', phone: '9886008822', email: 'prakash@nkwc.org' },
     recognitions: ['Featured in Hubballi civic participation bulletin'],
     updates: ['New student volunteer chapters launched in 4 colleges']
+  },
+  {
+    ngoSlug: 'namma-lake-guardians',
+    title: 'Bellandur Lake Restoration Sprint 2026',
+    description: 'Support shoreline clean-up, invasive plant removal, and citizen water-quality tracking around Bellandur Lake.',
+    category: 'Environment',
+    location: 'Bellandur, Bengaluru, Karnataka',
+    area: 'Bellandur Lake',
+    coordinates: { lat: 12.9306, lng: 77.6764 },
+    goalAmount: 900000,
+    currentAmount: 210000,
+    volunteersNeeded: ['Lake Clean-up Drive', 'Water Testing', 'Community Outreach'],
+    image: imageUrl('camp-nlg-1', 1200, 760),
+    gallery: [imageUrl('camp-nlg-1a', 900, 600), imageUrl('camp-nlg-1b', 900, 600)],
+    videoUrl: 'https://www.youtube.com/watch?v=uyDGfueQ49w',
+    highlights: ['Monthly cleanups with SOPs', 'Citizen water sampling kits', 'Waste hotspot mapping'],
+    timeline: { startDate: '2026-02-05', endDate: '2026-11-30' },
+    beneficiaryStats: { target: 2500, reached: 820, householdsSupported: 0, volunteersEngaged: 190 },
+    testimonials: [
+      { name: 'Karthika N', role: 'Volunteer Lead', quote: 'Data + action keeps the community engaged beyond one cleanup.' }
+    ],
+    coordinator: { name: 'Shreya K', phone: '9886009333', email: 'shreya@nammalakeguardians.org' },
+    recognitions: ['Supported by local lake committees'],
+    updates: ['Two new waste inflow points mapped and escalated', 'Sampling expanded to 6 shoreline stations']
+  },
+  {
+    ngoSlug: 'bengaluru-digital-literacy',
+    title: 'Digital Literacy Bootcamp - KR Puram',
+    description: 'Fund and volunteer for a 6-week digital literacy bootcamp for job seekers and women learners in KR Puram.',
+    category: 'Education',
+    location: 'KR Puram, Bengaluru, Karnataka',
+    area: 'KR Puram',
+    coordinates: { lat: 13.0076, lng: 77.6954 },
+    goalAmount: 450000,
+    currentAmount: 98000,
+    volunteersNeeded: ['Mentorship', 'Laptop Refurbishment', 'Training Coordinator'],
+    image: imageUrl('camp-bdlm-1', 1200, 760),
+    gallery: [imageUrl('camp-bdlm-1a', 900, 600), imageUrl('camp-bdlm-1b', 900, 600)],
+    videoUrl: 'https://www.youtube.com/watch?v=8jPQjjsBbIc',
+    highlights: ['Hands-on lab sessions', 'Resume + interview prep', 'Placement partner referrals'],
+    timeline: { startDate: '2026-02-12', endDate: '2026-08-12' },
+    beneficiaryStats: { target: 420, reached: 110, householdsSupported: 90, volunteersEngaged: 62 },
+    testimonials: [
+      { name: 'Suma J', role: 'Bootcamp Participant', quote: 'I learned to apply online and prepare for interviews with confidence.' }
+    ],
+    coordinator: { name: 'Ravi S', phone: '9886009444', email: 'ravi@bdmission.org' },
+    recognitions: ['NSDC-aligned curriculum partner'],
+    updates: ['New placement MoU signed with 3 local employers', 'Refurbished device pool expanded to 120 laptops']
+  },
+  {
+    ngoSlug: 'womenworks-bengaluru',
+    title: 'Women Micro-Enterprise Accelerator - Jayanagar',
+    description: 'Support micro-enterprises with mentoring, bookkeeping help, and market linkage support for women-led businesses.',
+    category: 'Livelihood',
+    location: 'Jayanagar, Bengaluru, Karnataka',
+    area: 'Jayanagar',
+    coordinates: { lat: 12.9279, lng: 77.5838 },
+    goalAmount: 650000,
+    currentAmount: 187000,
+    volunteersNeeded: ['Business Mentoring', 'Design', 'Market Linkage Support'],
+    image: imageUrl('camp-wwb-1', 1200, 760),
+    gallery: [imageUrl('camp-wwb-1a', 900, 600), imageUrl('camp-wwb-1b', 900, 600)],
+    videoUrl: 'https://www.youtube.com/watch?v=8jPQjjsBbIc',
+    highlights: ['Mentorship circles every fortnight', 'Digital commerce onboarding', 'Financial literacy support'],
+    timeline: { startDate: '2026-01-28', endDate: '2026-10-28' },
+    beneficiaryStats: { target: 260, reached: 92, householdsSupported: 92, volunteersEngaged: 44 },
+    testimonials: [
+      { name: 'Farzana A', role: 'Entrepreneur', quote: 'Market linkages helped me reach new customers consistently.' }
+    ],
+    coordinator: { name: 'Sneha V', phone: '9886009555', email: 'sneha@womenworksblr.org' },
+    recognitions: ['Recognised by local SHG federations'],
+    updates: ['New e-commerce onboarding batch started', 'Mentor network expanded with 12 volunteers']
+  },
+  {
+    ngoSlug: 'swasthya-seva-bengaluru',
+    title: 'Community Health Camps - Whitefield',
+    description: 'Run preventive screening camps and follow-up support for families in Whitefield and Mahadevapura.',
+    category: 'Health',
+    location: 'Whitefield, Bengaluru, Karnataka',
+    area: 'Whitefield',
+    coordinates: { lat: 12.9698, lng: 77.7509 },
+    goalAmount: 380000,
+    currentAmount: 124000,
+    volunteersNeeded: ['Patient Registration Desk', 'Pharmacy Support', 'Health Awareness'],
+    image: imageUrl('camp-ssh-1', 1200, 760),
+    gallery: [imageUrl('camp-ssh-1a', 900, 600), imageUrl('camp-ssh-1b', 900, 600)],
+    videoUrl: 'https://www.youtube.com/watch?v=8jPQjjsBbIc',
+    highlights: ['Diabetes + BP screening', 'Referral support', 'Nutrition guidance sessions'],
+    timeline: { startDate: '2026-02-01', endDate: '2026-09-01' },
+    beneficiaryStats: { target: 2400, reached: 680, householdsSupported: 520, volunteersEngaged: 78 },
+    testimonials: [
+      { name: 'Dr. Sunil K', role: 'Partner Doctor', quote: 'Structured follow-ups significantly improved adherence to referrals.' }
+    ],
+    coordinator: { name: 'Harish P', phone: '9886009666', email: 'harish@swasthyaseva.org' },
+    recognitions: ['Partnered with local clinics for referrals'],
+    updates: ['Two new screening sites onboarded in Mahadevapura', 'Follow-up helpline expanded to evening hours']
+  },
+  {
+    ngoSlug: 'accessible-bengaluru',
+    title: 'Accessible Transport Audits - Metro & Bus Stops',
+    description: 'Volunteer to audit transport hubs and build a public issue tracker for accessibility improvements.',
+    category: 'Human Rights',
+    location: 'Indiranagar, Bengaluru, Karnataka',
+    area: 'Indiranagar',
+    coordinates: { lat: 12.9784, lng: 77.6403 },
+    goalAmount: 0,
+    currentAmount: 0,
+    volunteersNeeded: ['Accessibility Audit', 'Data Entry Support', 'Photography & Documentation'],
+    image: imageUrl('camp-abi-1', 1200, 760),
+    gallery: [imageUrl('camp-abi-1a', 900, 600), imageUrl('camp-abi-1b', 900, 600)],
+    videoUrl: 'https://www.youtube.com/watch?v=uyDGfueQ49w',
+    highlights: ['Standardized audit checklist', 'Public issue tracker dashboards', 'Civic follow-up support'],
+    timeline: { startDate: '2026-02-08', endDate: '2026-12-08' },
+    beneficiaryStats: { target: 140, reached: 28, householdsSupported: 0, volunteersEngaged: 28 },
+    testimonials: [
+      { name: 'Neelima S', role: 'Founder', quote: 'Good audits create a clear backlog for improvement and follow-up.' }
+    ],
+    coordinator: { name: 'Prashanth J', phone: '9886009777', email: 'prashanth@accessiblebengaluru.org' },
+    recognitions: ['Shared with civic stakeholders as a baseline report'],
+    updates: ['Checklist updated for signage and tactile path gaps', 'First audit wave started in 3 metro corridors']
+  },
+  {
+    ngoSlug: 'namma-street-care',
+    title: 'Segregation Champions - Shivajinagar Ward',
+    description: 'Support waste segregation awareness and clean-market interventions with ward-level volunteer champions.',
+    category: 'Urban Sanitation',
+    location: 'Shivajinagar, Bengaluru, Karnataka',
+    area: 'Shivajinagar',
+    coordinates: { lat: 12.9836, lng: 77.6046 },
+    goalAmount: 250000,
+    currentAmount: 64000,
+    volunteersNeeded: ['Door-to-door Outreach', 'Waste Segregation Desk', 'Event Volunteering'],
+    image: imageUrl('camp-nsc-1', 1200, 760),
+    gallery: [imageUrl('camp-nsc-1a', 900, 600), imageUrl('camp-nsc-1b', 900, 600)],
+    videoUrl: 'https://www.youtube.com/watch?v=uyDGfueQ49w',
+    highlights: ['Vendor cluster onboarding', 'Ward-level cleanup events', 'Segregation SOP demos'],
+    timeline: { startDate: '2026-01-25', endDate: '2026-07-25' },
+    beneficiaryStats: { target: 1200, reached: 310, householdsSupported: 240, volunteersEngaged: 52 },
+    testimonials: [
+      { name: 'Imran K', role: 'Market Association', quote: 'Compliance improved after we started daily checklist-based collection.' }
+    ],
+    coordinator: { name: 'Kiran B', phone: '9886009888', email: 'kiran@nammastreetcare.org' },
+    recognitions: ['BBMP clean ward collaboration'],
+    updates: ['New vendor onboarding kits distributed', 'Pilot ward scorecard launched with partners']
+  },
+  {
+    ngoSlug: 'bengaluru-food-rescue',
+    title: 'Surplus Food Redistribution - Koramangala',
+    description: 'Fund safe logistics and volunteer shifts to rescue surplus meals and deliver to partner shelters in Bengaluru.',
+    category: 'Hunger',
+    location: 'Koramangala, Bengaluru, Karnataka',
+    area: 'Koramangala',
+    coordinates: { lat: 12.9352, lng: 77.6245 },
+    goalAmount: 520000,
+    currentAmount: 156000,
+    volunteersNeeded: ['Pickup Logistics', 'Kitchen Sorting', 'Recipient Coordination'],
+    image: imageUrl('camp-bfra-1', 1200, 760),
+    gallery: [imageUrl('camp-bfra-1a', 900, 600), imageUrl('camp-bfra-1b', 900, 600)],
+    videoUrl: 'https://www.youtube.com/watch?v=8jPQjjsBbIc',
+    highlights: ['Daily pickup routes', 'Food safety SOP', 'Partner shelter distribution'],
+    timeline: { startDate: '2026-02-03', endDate: '2026-12-03' },
+    beneficiaryStats: { target: 56000, reached: 18200, householdsSupported: 7800, volunteersEngaged: 96 },
+    testimonials: [
+      { name: 'Joseph M', role: 'Shelter Coordinator', quote: 'Daily deliveries improved meal consistency for our residents.' }
+    ],
+    coordinator: { name: 'Anusha R', phone: '9886010123', email: 'anusha@bengalurufoodrescue.org' },
+    recognitions: ['Featured in Bengaluru food waste reduction bulletin'],
+    updates: ['New pickup partner onboarded in Koramangala', 'Cold storage pilot launched for weekend routes']
   }
 ];
 
 const sampleUsers = [
-  { name: 'Rahul Kumar', email: 'rahul@example.com', mobileNumber: '9999999999' },
-  { name: 'Ananya Reddy', email: 'ananya.reddy@example.com', mobileNumber: '9886512345' },
-  { name: 'Karthik Bhat', email: 'karthik.bhat@example.com', mobileNumber: '9886523456' },
-  { name: 'Priya Shetty', email: 'priya.shetty@example.com', mobileNumber: '9886534567' },
-  { name: 'Naveen Gowda', email: 'naveen.gowda@example.com', mobileNumber: '9886545678' },
-  { name: 'Divya Nair', email: 'divya.nair@example.com', mobileNumber: '9886556789' },
-  { name: 'Sandeep Rao', email: 'sandeep.rao@example.com', mobileNumber: '9886567890' },
-  { name: 'Aishwarya Pai', email: 'aishwarya.pai@example.com', mobileNumber: '9886578901' },
-  { name: 'Rohan Kulkarni', email: 'rohan.kulkarni@example.com', mobileNumber: '9886589012' },
-  { name: 'Meera Hegde', email: 'meera.hegde@example.com', mobileNumber: '9886590123' }
+  { name: 'Rahul Kumar', email: 'rahul@example.com', mobileNumber: '9999999999', location: 'Koramangala, Bengaluru, Karnataka' },
+  { name: 'Ananya Reddy', email: 'ananya.reddy@example.com', mobileNumber: '9886512345', location: 'Indiranagar, Bengaluru, Karnataka' },
+  { name: 'Karthik Bhat', email: 'karthik.bhat@example.com', mobileNumber: '9886523456', location: 'Rajajinagar, Bengaluru, Karnataka' },
+  { name: 'Priya Shetty', email: 'priya.shetty@example.com', mobileNumber: '9886534567', location: 'Jayanagar, Bengaluru, Karnataka' },
+  { name: 'Naveen Gowda', email: 'naveen.gowda@example.com', mobileNumber: '9886545678', location: 'Whitefield, Bengaluru, Karnataka' },
+  { name: 'Divya Nair', email: 'divya.nair@example.com', mobileNumber: '9886556789', location: 'HSR Layout, Bengaluru, Karnataka' },
+  { name: 'Sandeep Rao', email: 'sandeep.rao@example.com', mobileNumber: '9886567890', location: 'Marathahalli, Bengaluru, Karnataka' },
+  { name: 'Aishwarya Pai', email: 'aishwarya.pai@example.com', mobileNumber: '9886578901', location: 'Malleshwaram, Bengaluru, Karnataka' },
+  { name: 'Rohan Kulkarni', email: 'rohan.kulkarni@example.com', mobileNumber: '9886589012', location: 'BTM Layout, Bengaluru, Karnataka' },
+  { name: 'Meera Hegde', email: 'meera.hegde@example.com', mobileNumber: '9886590123', location: 'Bellandur, Bengaluru, Karnataka' },
+  { name: 'Sahana Iyer', email: 'sahana.iyer@example.com', mobileNumber: '9886600001', location: 'Indiranagar, Bengaluru, Karnataka' },
+  { name: 'Aditya Narayan', email: 'aditya.narayan@example.com', mobileNumber: '9886600002', location: 'Koramangala, Bengaluru, Karnataka' },
+  { name: 'Nisha Kulkarni', email: 'nisha.kulkarni@example.com', mobileNumber: '9886600003', location: 'Whitefield, Bengaluru, Karnataka' },
+  { name: 'Mohammed Faiz', email: 'mohammed.faiz@example.com', mobileNumber: '9886600004', location: 'Shivajinagar, Bengaluru, Karnataka' },
+  { name: 'Harini Rao', email: 'harini.rao@example.com', mobileNumber: '9886600005', location: 'Jayanagar, Bengaluru, Karnataka' },
+  { name: 'Siddharth Menon', email: 'siddharth.menon@example.com', mobileNumber: '9886600006', location: 'HSR Layout, Bengaluru, Karnataka' },
+  { name: 'Pooja Desai', email: 'pooja.desai@example.com', mobileNumber: '9886600007', location: 'Marathahalli, Bengaluru, Karnataka' },
+  { name: 'Vikram Shetty', email: 'vikram.shetty@example.com', mobileNumber: '9886600008', location: 'Malleshwaram, Bengaluru, Karnataka' },
+  { name: 'Keerthana Prasad', email: 'keerthana.prasad@example.com', mobileNumber: '9886600009', location: 'Basavanagudi, Bengaluru, Karnataka' },
+  { name: 'Arjun Kulkarni', email: 'arjun.kulkarni@example.com', mobileNumber: '9886600010', location: 'JP Nagar, Bengaluru, Karnataka' },
+  { name: 'Aditi Shenoy', email: 'aditi.shenoy@example.com', mobileNumber: '9886600011', location: 'Banashankari, Bengaluru, Karnataka' },
+  { name: 'Ritesh Gupta', email: 'ritesh.gupta@example.com', mobileNumber: '9886600012', location: 'Electronic City, Bengaluru, Karnataka' },
+  { name: 'Shalini N', email: 'shalini.n@example.com', mobileNumber: '9886600013', location: 'Yelahanka, Bengaluru, Karnataka' },
+  { name: 'Ganesh Hegde', email: 'ganesh.hegde@example.com', mobileNumber: '9886600014', location: 'RT Nagar, Bengaluru, Karnataka' },
+  { name: 'Neha Joshi', email: 'neha.joshi@example.com', mobileNumber: '9886600015', location: 'Kengeri, Bengaluru, Karnataka' },
+  { name: 'Srikant R', email: 'srikant.r@example.com', mobileNumber: '9886600016', location: 'Vijayanagar, Bengaluru, Karnataka' },
+  { name: 'Deepika S', email: 'deepika.s@example.com', mobileNumber: '9886600017', location: 'Hebbal, Bengaluru, Karnataka' },
+  { name: 'Ajay Rao', email: 'ajay.rao@example.com', mobileNumber: '9886600018', location: 'Rajajinagar, Bengaluru, Karnataka' },
+  { name: 'Swathi Pai', email: 'swathi.pai@example.com', mobileNumber: '9886600019', location: 'MG Road, Bengaluru, Karnataka' },
+  { name: 'Ishaan Bhat', email: 'ishaan.bhat@example.com', mobileNumber: '9886600020', location: 'BTM Layout, Bengaluru, Karnataka' },
+  { name: 'Meghana S', email: 'meghana.s@example.com', mobileNumber: '9886600021', location: 'Sarjapur Road, Bengaluru, Karnataka' },
+  { name: 'Pranav Jain', email: 'pranav.jain@example.com', mobileNumber: '9886600022', location: 'Bellandur, Bengaluru, Karnataka' },
+  { name: 'Lavanya K', email: 'lavanya.k@example.com', mobileNumber: '9886600023', location: 'Ulsoor, Bengaluru, Karnataka' },
+  { name: 'Rohit S', email: 'rohit.s@example.com', mobileNumber: '9886600024', location: 'KR Puram, Bengaluru, Karnataka' },
+  { name: 'Sneha Iyer', email: 'sneha.iyer@example.com', mobileNumber: '9886600025', location: 'Hoodi, Bengaluru, Karnataka' },
+  { name: 'Manoj Kumar', email: 'manoj.kumar2@example.com', mobileNumber: '9886600026', location: 'Arekere, Bengaluru, Karnataka' },
+  { name: 'Sowmya R', email: 'sowmya.r@example.com', mobileNumber: '9886600027', location: 'Sanjaynagar, Bengaluru, Karnataka' },
+  { name: 'Ankit Verma', email: 'ankit.verma@example.com', mobileNumber: '9886600028', location: 'Peenya, Bengaluru, Karnataka' },
+  { name: 'Fathima S', email: 'fathima.s@example.com', mobileNumber: '9886600029', location: 'Frazer Town, Bengaluru, Karnataka' },
+  { name: 'Chinmay Shekhar', email: 'chinmay.shekhar@example.com', mobileNumber: '9886600030', location: 'Kadugodi, Bengaluru, Karnataka' },
+  { name: 'Tanvi Kulkarni', email: 'tanvi.kulkarni@example.com', mobileNumber: '9886600031', location: 'Domlur, Bengaluru, Karnataka' },
+  { name: 'Kavya R', email: 'kavya.r@example.com', mobileNumber: '9886600032', location: 'Kalyan Nagar, Bengaluru, Karnataka' },
+  { name: 'Sanjana M', email: 'sanjana.m@example.com', mobileNumber: '9886600033', location: 'Nagarbhavi, Bengaluru, Karnataka' },
+  { name: 'Abhishek Rao', email: 'abhishek.rao@example.com', mobileNumber: '9886600034', location: 'Hennur, Bengaluru, Karnataka' },
+  { name: 'Prisha Nair', email: 'prisha.nair@example.com', mobileNumber: '9886600035', location: 'Cooke Town, Bengaluru, Karnataka' }
 ];
 
 const categoryNames = [
@@ -1177,7 +1996,7 @@ const seedDatabase = async () => {
       role: 'user',
       interests: faker.helpers.arrayElements(['Education', 'Health', 'Environment', 'Women', 'Children', 'Rural Development'], 2),
       skills: faker.helpers.arrayElements(['Teaching', 'Fundraising', 'Design', 'Operations', 'Healthcare Support', 'Mentoring'], 2),
-      location: index % 2 === 0 ? 'Bengaluru, Karnataka' : 'Karnataka'
+      location: user.location || (index % 2 === 0 ? 'Bengaluru, Karnataka' : 'Karnataka')
     }));
 
     const createdUsers = await User.insertMany(users);
@@ -1208,9 +2027,8 @@ const seedDatabase = async () => {
 
     const campaignPayload = campaignSeeds.map((seed) => {
       const ngo = ngoBySlug[seed.ngoSlug];
-      const volunteerIds = seed.volunteersNeeded?.length
-        ? buildVolunteerApplicants(createdUsers, Boolean(rahulUser && faker.datatype.boolean(0.35)))
-        : [];
+      // Keep seed campaigns free of user-joined state so local dev flows are predictable.
+      const volunteerIds = [];
 
       return {
         ngo: ngo?.id,
@@ -1263,7 +2081,8 @@ const seedDatabase = async () => {
             endDate
           },
           spots: faker.number.int({ min: 10, max: 35 }),
-          applicants: buildVolunteerApplicants(createdUsers, index % 3 === 0)
+          // Keep opportunities free of pre-applied users; applications are created through the API flow.
+          applicants: []
         };
       });
 
