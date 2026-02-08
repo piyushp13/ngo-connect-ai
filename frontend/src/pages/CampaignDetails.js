@@ -49,6 +49,9 @@ export default function CampaignDetails() {
   const [volunteerLoading, setVolunteerLoading] = useState(false);
   const [volunteerMessage, setVolunteerMessage] = useState('');
   const [isVolunteered, setIsVolunteered] = useState(false);
+  const [volunteerJoined, setVolunteerJoined] = useState(false);
+  const [volunteerRegistration, setVolunteerRegistration] = useState(null);
+  const [showVolunteerForm, setShowVolunteerForm] = useState(false);
   const [volunteerForm, setVolunteerForm] = useState(initialVolunteerForm);
   const [flagReason, setFlagReason] = useState('');
   const [flagMessage, setFlagMessage] = useState('');
@@ -72,48 +75,70 @@ export default function CampaignDetails() {
         setDonatedAmount(currentAmount);
         setCampaignDone(requiredAmount > 0 && currentAmount >= requiredAmount);
 
-        if (payload.volunteers) {
-          const token = localStorage.getItem('token');
-          if (token) {
-            try {
-              const decoded = JSON.parse(atob(token.split('.')[1]));
-              const joined = payload.volunteers.some((entry) => String(entry) === String(decoded.id));
-              setIsVolunteered(joined);
-              setVolunteerForm((prev) => ({
-                ...prev,
-                fullName: prev.fullName || decoded.name || '',
-                email: prev.email || decoded.email || '',
-                phone: prev.phone || decoded.mobileNumber || ''
-              }));
-              api.get(`/campaigns/${id}/volunteer/me`)
-                .then((registrationRes) => {
-                  const registration = registrationRes.data?.registration;
-                  if (!registration) return;
-                  setVolunteerForm({
-                    fullName: registration.fullName || decoded.name || '',
-                    email: registration.email || decoded.email || '',
-                    phone: registration.phone || decoded.mobileNumber || '',
-                    preferredActivities: Array.isArray(registration.preferredActivities)
-                      ? registration.preferredActivities.join(', ')
-                      : '',
-                    availability: registration.availability || '',
-                    motivation: registration.motivation || ''
-                  });
-                })
-                .catch(() => {});
-            } catch (e) {
-              setIsVolunteered(false);
-            }
-          }
-        }
-
         setLoading(false);
       })
       .catch(() => {
         setError('Failed to fetch campaign details.');
         setLoading(false);
       });
-  }, [id]);
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        setVolunteerForm((prev) => ({
+          ...prev,
+          fullName: prev.fullName || decoded.name || '',
+          email: prev.email || decoded.email || '',
+          phone: prev.phone || decoded.mobileNumber || ''
+        }));
+      } catch (err) {
+        // ignore token parse issues
+      }
+    }
+
+    if (token && isUser) {
+      api.get(`/campaigns/${id}/volunteer/me`)
+        .then((registrationRes) => {
+          const joined = Boolean(registrationRes.data?.joined);
+          const registration = registrationRes.data?.registration || null;
+          setVolunteerJoined(joined);
+          setVolunteerRegistration(registration);
+          setIsVolunteered(Boolean(registration));
+          setShowVolunteerForm(!registration);
+
+          if (!registration) {
+            if (joined) {
+              setVolunteerMessage('You are listed as a volunteer for this campaign, but your onboarding details are missing. Please submit the form below.');
+            }
+            return;
+          }
+
+          setVolunteerForm((prev) => ({
+            ...prev,
+            fullName: registration.fullName || prev.fullName,
+            email: registration.email || prev.email,
+            phone: registration.phone || prev.phone,
+            preferredActivities: Array.isArray(registration.preferredActivities)
+              ? registration.preferredActivities.join(', ')
+              : prev.preferredActivities,
+            availability: registration.availability || prev.availability,
+            motivation: registration.motivation || prev.motivation
+          }));
+        })
+        .catch(() => {
+          setVolunteerJoined(false);
+          setVolunteerRegistration(null);
+          setIsVolunteered(false);
+          setShowVolunteerForm(false);
+        });
+    } else {
+      setVolunteerJoined(false);
+      setVolunteerRegistration(null);
+      setIsVolunteered(false);
+      setShowVolunteerForm(false);
+    }
+  }, [id, isUser]);
 
   const requiredDonationAmount = campaign?.requiredDonationAmount ?? campaign?.goalAmount ?? 0;
   const hasFunding = requiredDonationAmount > 0;
@@ -121,6 +146,8 @@ export default function CampaignDetails() {
   const percentage = requiredDonationAmount > 0
     ? Math.min((Number(campaign?.currentAmount || 0) / requiredDonationAmount) * 100, 100)
     : 0;
+
+  const volunteerApprovalStatus = String(volunteerRegistration?.certificateApprovalStatus || '').trim().toLowerCase() || 'pending';
 
   const campaignCoordinates = getCampaignCoordinates(campaign);
   const locationText = getCampaignLocationText(campaign || {});
@@ -339,10 +366,16 @@ export default function CampaignDetails() {
         availability: String(volunteerForm.availability || '').trim(),
         motivation: String(volunteerForm.motivation || '').trim()
       });
-      const refreshed = await api.get(`/campaigns/${id}`);
+      const [refreshed, meRes] = await Promise.all([
+        api.get(`/campaigns/${id}`),
+        api.get(`/campaigns/${id}/volunteer/me`)
+      ]);
       setCampaign(refreshed.data);
-      setIsVolunteered(true);
-      setVolunteerMessage('Volunteer registration submitted. The NGO now has your details for onboarding.');
+      setVolunteerJoined(Boolean(meRes.data?.joined));
+      setVolunteerRegistration(meRes.data?.registration || null);
+      setIsVolunteered(Boolean(meRes.data?.registration));
+      setShowVolunteerForm(false);
+      setVolunteerMessage('Volunteer registration submitted. Waiting for NGO approval before certificate issuance.');
     } catch (err) {
       setVolunteerMessage(err.response?.data?.message || 'Failed to volunteer. Please try again.');
     }
@@ -735,12 +768,12 @@ export default function CampaignDetails() {
               </button>
             </div>
 
-            {hasVolunteers && (
-              <div className="bg-white rounded-lg shadow-xl p-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Volunteer</h2>
-                <p className="text-gray-600 mb-4">
-                  Join {campaign.volunteers?.length || 0} other volunteers and make a hands-on impact.
-                </p>
+                {hasVolunteers && (
+                  <div className="bg-white rounded-lg shadow-xl p-6">
+                    <h2 className="text-2xl font-bold text-gray-800 mb-4">Volunteer</h2>
+                    <p className="text-gray-600 mb-4">
+                      Join {campaign.volunteers?.length || 0} other volunteers and make a hands-on impact.
+                    </p>
                 {campaign.volunteersNeeded?.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
                     {campaign.volunteersNeeded.map((roleName, index) => (
@@ -755,12 +788,39 @@ export default function CampaignDetails() {
                   <div className="w-full text-center py-3 px-4 rounded-md bg-gray-50 text-gray-600 font-semibold border border-gray-200">
                     Volunteering is available for user accounts only.
                   </div>
-                ) : isVolunteered ? (
-                  <div className="w-full text-center py-3 px-4 rounded-md bg-green-50 text-green-700 font-semibold border border-green-200">
-                    ✓ You are already volunteering for this campaign
+                ) : isVolunteered && !showVolunteerForm ? (
+                  <div className={`w-full text-center py-3 px-4 rounded-md font-semibold border ${
+                    volunteerApprovalStatus === 'approved'
+                      ? 'bg-green-50 text-green-700 border-green-200'
+                      : volunteerApprovalStatus === 'rejected'
+                        ? 'bg-red-50 text-red-700 border-red-200'
+                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                  }`}>
+                    {volunteerApprovalStatus === 'approved'
+                      ? '✓ Volunteer registration approved. Certificate is available in your dashboard.'
+                      : volunteerApprovalStatus === 'rejected'
+                        ? 'Volunteer registration rejected. Please update your details and resubmit.'
+                        : 'Volunteer registration submitted. Waiting for NGO approval.'}
+                    {volunteerApprovalStatus === 'rejected' && volunteerRegistration?.certificateApprovalNote && (
+                      <p className="mt-2 text-sm font-normal">Note: {volunteerRegistration.certificateApprovalNote}</p>
+                    )}
+                    <div className="mt-3 flex justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowVolunteerForm(true)}
+                        className="px-4 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
+                      >
+                        Update Details
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
+                    {(volunteerJoined && !volunteerRegistration) && (
+                      <div className="p-3 rounded bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                        You are marked as a volunteer, but onboarding details are missing. Please submit the form below so the NGO can contact you.
+                      </div>
+                    )}
                     <input
                       type="text"
                       value={volunteerForm.fullName}
@@ -813,6 +873,16 @@ export default function CampaignDetails() {
                     >
                       {volunteerLoading ? 'Processing...' : 'Volunteer Now'}
                     </button>
+                    {isVolunteered && (
+                      <button
+                        type="button"
+                        onClick={() => setShowVolunteerForm(false)}
+                        className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        disabled={volunteerLoading}
+                      >
+                        Cancel
+                      </button>
+                    )}
                   </div>
                 )}
 

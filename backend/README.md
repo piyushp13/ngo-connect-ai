@@ -141,6 +141,8 @@ npm start
 
 - `GET /` returns API health payload.
 - Login works for seeded user/admin/ngo accounts.
+- Admin dashboard snapshot works: `GET /api/admin/dashboard` (admin auth).
+- Admin SSR snapshot works: `GET /api/admin/dashboard/ssr` (admin auth, HTML).
 - `GET /api/ngos` and `GET /api/campaigns` return data.
 - Donation initiate/confirm endpoints respond successfully.
 - Volunteer applications and certificate approval queues return expected results.

@@ -6,6 +6,15 @@ const NGO = require('../models/NGO');
 const Campaign = require('../models/Campaign');
 const User = require('../models/User');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const jwt = require('jsonwebtoken');
+const {
+  normalizeRole,
+  escapeRegExp,
+  selectKbEntries,
+  normalizeHistory,
+  buildPrompt,
+  buildFallbackReply
+} = require('../utils/supportChat');
 
 // Initialize Google Generative AI
 let genAI;
@@ -235,85 +244,131 @@ router.post('/classify-campaign', async (req, res) => {
 
 // Chatbot (LLM-powered)
 router.post('/chat', async (req, res) => {
-  if (!genAI) {
-    return res.status(500).json({ 
-      reply: "The chatbot is not configured. Please provide a valid GEMINI_API_KEY in the backend's .env file." 
-    });
-  }
-
   try {
-    const { message } = req.body;
-    const m = (message || '').toLowerCase();
+    const message = String(req.body?.message || '').trim();
+    if (!message) {
+      return res.json({ reply: 'Please type a message and try again.' });
+    }
+
+    const m = message.toLowerCase();
+    const history = normalizeHistory(req.body?.history || []);
+
+    const clientContext = req.body?.clientContext && typeof req.body.clientContext === 'object'
+      ? req.body.clientContext
+      : null;
+
+    let role = normalizeRole(clientContext?.role);
+    const authHeader = req.headers.authorization || '';
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+        role = normalizeRole(payload?.role);
+      } catch (err) {
+        // Ignore invalid token for chat; fall back to guest-safe behavior.
+        role = role || 'guest';
+      }
+    }
+
+    const kbEntries = selectKbEntries(message);
     
-        const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash" 
-    }, { apiVersion: 'v1beta' });
+    const buildDbContext = async () => {
+      const parts = [];
+
+	      const addNgoContext = async (label, filter) => {
+	        const ngos = await NGO.find(filter).limit(20).select('name description category location isActive');
+	        const visible = (ngos || []).filter((ngo) => ngo && ngo.isActive !== false).slice(0, 5);
+	        if (visible.length === 0) return;
+	        parts.push(`NGOs ${label}:`);
+	        parts.push(...visible.map((n) => `- ${n.name}: ${(n.description || '').slice(0, 160)} (Category: ${n.category || 'N/A'}, Location: ${n.location || 'N/A'})`));
+	      };
+
+      const addCampaignContext = async (label, filter) => {
+        const campaigns = await Campaign.find(filter)
+          .populate('ngo', 'name verified isActive')
+          .limit(5)
+          .select('title description category location goalAmount currentAmount');
+        const visible = (campaigns || []).filter((c) => c.ngo && c.ngo.verified !== false && c.ngo.isActive !== false);
+        if (visible.length === 0) return;
+        parts.push(`Campaigns ${label}:`);
+        parts.push(...visible.map((c) => {
+          const goal = Number(c.goalAmount || 0);
+          const current = Number(c.currentAmount || 0);
+          const pct = goal > 0 ? Math.round((current / goal) * 100) : 0;
+          return `- ${c.title}: ${c.category || 'Campaign'} (${c.location || 'N/A'}) by ${c.ngo?.name || 'NGO'} | ₹${current} raised${goal ? ` of ₹${goal} (${pct}%)` : ''}`;
+        }));
+      };
+
+      // Location-based queries: "... in <location>"
+      if (m.includes(' in ')) {
+        const partsRaw = m.split(' in ');
+        const potentialLocation = partsRaw[partsRaw.length - 1].replace('?', '').trim();
+        const escaped = escapeRegExp(potentialLocation);
+        if (escaped && escaped.length >= 2) {
+	          const rx = new RegExp(escaped, 'i');
+	          await Promise.all([
+	            addNgoContext(`in "${potentialLocation}"`, { verified: true, location: rx }),
+	            addCampaignContext(`in "${potentialLocation}"`, { location: rx })
+	          ]);
+	        }
+	      }
+
+      // Category-based queries: "... for/about <category>"
+      if (m.includes(' for ') || m.includes(' about ')) {
+        const partsRaw = m.split(/ for | about /);
+        const potentialCategory = partsRaw[partsRaw.length - 1].replace('?', '').trim();
+        const escaped = escapeRegExp(potentialCategory);
+        if (escaped && escaped.length >= 2) {
+	          const rx = new RegExp(escaped, 'i');
+	          await Promise.all([
+	            addNgoContext(`related to "${potentialCategory}"`, { verified: true, category: rx }),
+	            addCampaignContext(`related to "${potentialCategory}"`, { category: rx })
+	          ]);
+	        }
+	      }
+
+      return parts.join('\n');
+    };
 
     // --- Basic RAG (Retrieval-Augmented Generation) ---
-    let context = "";
-    // 1. Check for location-based queries
-    if (m.includes(' in ')) {
-      const parts = m.split(' in ');
-      const potentialLocation = parts[parts.length - 1].replace('?', '').trim();
-      const ngos = await NGO.find({ 
-        verified: true,
-        location: new RegExp(potentialLocation, 'i') 
-      }).limit(5).select('name description category');
-      
-      if (ngos.length > 0) {
-        context += `\n\nHere is some data from the database about NGOs in "${potentialLocation}":\n`;
-        context += ngos.map(n => `- ${n.name}: ${n.description} (Category: ${n.category})`).join('\n');
-      }
-    }
-    // 2. Check for category-based queries
-    else if (m.includes(' for ') || m.includes(' about ')) {
-      const parts = m.split(/ for | about /);
-      const potentialCategory = parts[parts.length - 1].replace('?', '').trim();
-      const ngos = await NGO.find({ 
-        verified: true,
-        category: new RegExp(potentialCategory, 'i') 
-      }).limit(5).select('name description category');
-      
-      if (ngos.length > 0) {
-        context += `\n\nHere is some data from the database about NGOs related to "${potentialCategory}":\n`;
-        context += ngos.map(n => `- ${n.name}: ${n.description} (Category: ${n.category})`).join('\n');
-      }
+    const dbContext = await buildDbContext();
+
+    if (!genAI) {
+      const reply = buildFallbackReply({ message, role, kbEntries });
+      await AILog.create({ type: 'chat', payload: { message, role, historyCount: history.length }, result: { reply, mode: 'fallback' } });
+      return res.json({ reply, mode: 'fallback' });
     }
 
-    const prompt = `
-      You are "NGO Connect Bot", a friendly and helpful AI assistant for the NGO Connect web platform.
-      Your goal is to guide users, answer their questions about the platform, and help them find NGOs and campaigns.
-      
-      Platform Features:
-      - Users can register as a regular user or as an NGO.
-      - NGOs must be verified by an admin before they can create campaigns. They do this by uploading documents through their profile.
-      - Users can browse a list of verified NGOs and active campaigns (for fundraising or volunteering).
-      - Users can donate to campaigns or sign up to volunteer.
-      - Users can find NGOs based on their category (e.g., education, health) and location.
+    const model = genAI.getGenerativeModel(
+      { model: 'gemini-2.5-flash' },
+      { apiVersion: 'v1beta' }
+    );
 
-      Instructions:
-      - Be conversational and encouraging.
-      - If you are asked to recommend NGOs, use the data provided in the context below.
-      - If no specific data is provided in the context, you can answer general questions about the platform, but do NOT invent NGO names or details. Instead, guide the user on how to search for them on the platform (e.g., "You can browse all NGOs on the NGOs page!").
-      - Keep your answers concise and to the point.
-      
-      ${context ? `CONTEXT FROM DATABASE:\n${context}` : ''}
+    const prompt = buildPrompt({
+      message,
+      role,
+      kbEntries,
+      dbContext,
+      history,
+      clientContext
+    });
 
-      USER'S QUESTION: "${message}"
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const reply = response.text();
 
-      YOUR RESPONSE:
-    `;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const reply = response.text();
-
-    await AILog.create({ type: 'chat', payload: { message }, result: { reply } });
-    res.json({ reply });
+      await AILog.create({ type: 'chat', payload: { message, role, historyCount: history.length }, result: { reply, mode: 'gemini' } });
+      return res.json({ reply, mode: 'gemini' });
+    } catch (llmErr) {
+      const reply = buildFallbackReply({ message, role, kbEntries });
+      await AILog.create({ type: 'chat', payload: { message, role, historyCount: history.length }, result: { reply, mode: 'fallback-after-error' } });
+      return res.json({ reply, mode: 'fallback' });
+    }
 
   } catch (err) {
     console.error("Chatbot API error:", err);
-    res.status(500).json({ reply: 'Sorry, I am having trouble connecting to my brain right now. Please try again later.' });
+    res.json({ reply: 'Sorry, I ran into an issue. Please try again.' });
   }
 });
 

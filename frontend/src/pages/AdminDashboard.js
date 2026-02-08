@@ -26,6 +26,15 @@ const clamp01 = (value) => Math.max(0, Math.min(1, Number(value || 0)));
 const pct = (value) => `${Math.round(clamp01(value) * 100)}%`;
 const textOrDash = (value) => (value === null || value === undefined || String(value).trim() === '' ? '-' : value);
 
+const openHtmlDocument = (html) => {
+  const viewer = window.open('', '_blank');
+  if (!viewer) return false;
+  viewer.document.open();
+  viewer.document.write(html);
+  viewer.document.close();
+  return true;
+};
+
 export default function AdminDashboard() {
   const [snapshot, setSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,11 +80,11 @@ export default function AdminDashboard() {
   };
 
   const fetchSnapshot = useCallback(
-    async ({ silent = false } = {}) => {
+    async ({ silent = false, noCache = false } = {}) => {
       if (!silent) setRefreshing(true);
       setError('');
       try {
-        const res = await getAdminDashboard({ limit: 30, days: 14 });
+        const res = await getAdminDashboard({ limit: 30, days: 14, ...(noCache ? { noCache: 1 } : {}) });
         setSnapshot(res.data || null);
       } catch (err) {
         setError(err.response?.data?.message || 'Unable to load admin dashboard data right now.');
@@ -219,7 +228,7 @@ export default function AdminDashboard() {
     setActionState((prev) => ({ ...prev, [key]: true }));
     try {
       await api.post(`/admin/verify-ngo/${ngoId}`);
-      await fetchSnapshot();
+      await fetchSnapshot({ noCache: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to verify NGO.');
     } finally {
@@ -233,7 +242,7 @@ export default function AdminDashboard() {
     setActionState((prev) => ({ ...prev, [key]: true }));
     try {
       await api.post(`/admin/reject-ngo/${ngoId}`);
-      await fetchSnapshot();
+      await fetchSnapshot({ noCache: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reject NGO.');
     } finally {
@@ -247,7 +256,7 @@ export default function AdminDashboard() {
     setActionState((prev) => ({ ...prev, [key]: true }));
     try {
       await api.put(`/admin/resolve-flag/${type}/${id}`);
-      await fetchSnapshot();
+      await fetchSnapshot({ noCache: true });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to resolve flag.');
     } finally {
@@ -258,6 +267,19 @@ export default function AdminDashboard() {
   const donationSeries = snapshot?.series?.donations || [];
   const volunteerSeries = snapshot?.series?.volunteerApplications || [];
   const generatedAt = snapshot?.generatedAt || null;
+
+  const openServerRenderedView = async () => {
+    setError('');
+    try {
+      const res = await api.get('/admin/dashboard/ssr?limit=30&days=14&noCache=1', { responseType: 'text' });
+      const html = typeof res.data === 'string' ? res.data : '<p>Unable to load dashboard.</p>';
+      const opened = openHtmlDocument(html);
+      if (!opened) setError('Please allow popups to open the server-rendered dashboard view.');
+    } catch (err) {
+      const message = typeof err.response?.data === 'string' ? err.response.data : err.response?.data?.message;
+      setError(message || 'Failed to open the server-rendered dashboard view.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50 p-6">
@@ -285,7 +307,7 @@ export default function AdminDashboard() {
               </label>
               <button
                 type="button"
-                onClick={() => fetchSnapshot()}
+                onClick={() => fetchSnapshot({ noCache: true })}
                 disabled={refreshing}
                 className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 disabled:opacity-60"
               >
@@ -297,6 +319,13 @@ export default function AdminDashboard() {
               >
                 Open Analytics
               </Link>
+              <button
+                type="button"
+                onClick={openServerRenderedView}
+                className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 text-sm font-semibold hover:bg-slate-50"
+              >
+                Open SSR View
+              </button>
             </div>
           </div>
         </header>
