@@ -384,6 +384,16 @@ export default function UserDashboard() {
   const handleViewCertificate = async (entity) => {
     const certificateId = getCertificateId(entity);
     if (!certificateId) {
+      const approvalStatus = String(entity?.certificateApprovalStatus || '').trim().toLowerCase();
+      if (approvalStatus === 'pending') {
+        setHistoryDetailError('Certificate is pending NGO approval. Please check back after the NGO approves it.');
+        return;
+      }
+      if (approvalStatus === 'rejected') {
+        const note = entity?.certificateApprovalNote ? ` Note: ${entity.certificateApprovalNote}` : '';
+        setHistoryDetailError(`Certificate request was rejected by the NGO.${note}`);
+        return;
+      }
       setHistoryDetailError('Certificate is not available yet.');
       return;
     }
@@ -885,7 +895,7 @@ export default function UserDashboard() {
                     <p><strong>Payment Method:</strong> {selectedDonation.paymentMethod || 'N/A'}</p>
                     <p><strong>Status:</strong> {selectedDonation.status}</p>
                     <p><strong>Receipt:</strong> {selectedDonation.receiptNumber || 'Pending'}</p>
-                    <p><strong>Certificate Approval:</strong> {selectedDonation.certificateApprovalStatus || 'N/A'}</p>
+                    <p><strong>Certificate Approval:</strong> {selectedDonation.certificateApprovalStatus || (selectedDonation.status === 'completed' ? 'pending' : 'not_requested')}</p>
                   </div>
 
                   {historyModalLoading ? (

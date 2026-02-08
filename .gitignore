@@ -1,3 +1,17 @@
 node_modules/
 .cache/
 
+# Environment files (never commit secrets)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# OS / tooling
+.DS_Store
+*.log

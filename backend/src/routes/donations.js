@@ -15,6 +15,7 @@ const {
   createPaymentOrder,
   verifyPayment
 } = require('../services/paymentGateway');
+const { query } = require('../db/postgres');
 
 const RECEIPT_PREFIX = 'RCP';
 
@@ -31,6 +32,36 @@ const normalizeAmount = (value) => {
 };
 
 const normalizeEmail = (value = '') => String(value || '').trim().toLowerCase();
+
+const getRefId = (value) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value.id) return String(value.id);
+  return '';
+};
+
+const normalizeDonationCertificateApprovalStatus = (donation) => {
+  const raw = String(donation?.certificateApprovalStatus || '').trim().toLowerCase();
+  if (raw) return raw;
+  if (getRefId(donation?.certificate)) return 'approved';
+  const status = String(donation?.status || '').trim().toLowerCase();
+  if (status === 'completed') return 'pending';
+  return 'not_requested';
+};
+
+const withNormalizedDonationCertificateState = (donation) => {
+  const doc = donation && typeof donation.toObject === 'function' ? donation.toObject() : { ...(donation || {}) };
+  const normalized = normalizeDonationCertificateApprovalStatus(doc);
+  doc.certificateApprovalStatus = normalized;
+  if (
+    normalized === 'pending' &&
+    !doc.certificateApprovalRequestedAt &&
+    String(doc.status || '').trim().toLowerCase() === 'completed'
+  ) {
+    doc.certificateApprovalRequestedAt = doc.paymentVerifiedAt || doc.receiptIssuedAt || doc.createdAt || new Date();
+  }
+  return doc;
+};
 
 const normalizePaymentDetails = (paymentMethod, payload = {}) => {
   const details = payload || {};
@@ -150,6 +181,7 @@ const createPendingDonationWithOrder = async ({
     paymentMeta: paymentMeta || {},
     gatewayProvider: gatewayOrder.provider,
     gatewayOrderId: gatewayOrder.orderId,
+    certificateApprovalStatus: 'not_requested',
     status: 'pending'
   });
 
@@ -201,9 +233,10 @@ const finalizeCompletedDonation = async ({
   donation.paymentVerifiedAt = new Date();
   donation.receiptNumber = donation.receiptNumber || makeReceiptNumber();
   donation.receiptIssuedAt = donation.receiptIssuedAt || new Date();
-  if (donation.certificateApprovalStatus === 'not_requested') {
+  const approvalState = String(donation.certificateApprovalStatus || '').trim().toLowerCase() || 'not_requested';
+  if (approvalState === 'not_requested') {
     donation.certificateApprovalStatus = 'pending';
-    donation.certificateApprovalRequestedAt = new Date();
+    donation.certificateApprovalRequestedAt = donation.certificateApprovalRequestedAt || new Date();
   }
   await donation.save();
 
@@ -234,6 +267,8 @@ const issueDonationCertificate = async (donationDoc) => {
     type: 'donation',
     title: 'Certificate of Generous Contribution',
     certificateNumber: generateCertificateNumber('donation'),
+    status: 'active',
+    issuedAt: new Date(),
     metadata: {
       recipientName: donation.donorName || donation.user?.name,
       recipientEmail: donation.donorEmail || donation.user?.email,
@@ -281,6 +316,136 @@ const mapReceiptPayload = (donation) => ({
   }
 });
 
+const mapRowDoc = (row, idField, docField) => {
+  const doc = row?.[docField] && typeof row[docField] === 'object' ? { ...row[docField] } : {};
+  if (!doc.id) doc.id = row?.[idField];
+  return doc;
+};
+
+// NGO donation transactions + summary
+router.get('/ngo/transactions', auth(['ngo']), async (req, res) => {
+  try {
+    const ngoId = req.user.id;
+    const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 100);
+
+    const {
+      rows: [summaryRow = {}]
+    } = await query(
+      `
+      SELECT
+        COUNT(*) FILTER (
+          WHERE COALESCE(NULLIF(d.source_doc->>'status', ''), 'pending') = 'completed'
+        ) AS completed_count,
+        COALESCE(
+          SUM(
+            CASE
+              WHEN COALESCE(NULLIF(d.source_doc->>'status', ''), 'pending') = 'completed'
+                THEN COALESCE(safe_numeric(d.source_doc->>'amount'), 0)
+              ELSE 0
+            END
+          ),
+          0
+        ) AS total_completed_amount,
+        COUNT(*) FILTER (
+          WHERE COALESCE(NULLIF(d.source_doc->>'status', ''), 'pending') = 'completed'
+            AND COALESCE(NULLIF(d.source_doc->>'certificateApprovalStatus', ''), 'not_requested') NOT IN ('approved', 'rejected')
+            AND (
+              CASE
+                WHEN jsonb_typeof(d.source_doc->'certificate') = 'string' THEN NULLIF(d.source_doc->>'certificate', '')
+                WHEN jsonb_typeof(d.source_doc->'certificate') = 'object' THEN NULLIF(d.source_doc#>>'{certificate,id}', '')
+                ELSE NULL
+              END
+            ) IS NULL
+        ) AS pending_certificate_count
+      FROM donations_rel d
+      WHERE (
+        (jsonb_typeof(d.source_doc->'ngo') = 'string' AND d.source_doc->>'ngo' = $1)
+        OR (jsonb_typeof(d.source_doc->'ngo') = 'object' AND d.source_doc#>>'{ngo,id}' = $1)
+      )
+      `,
+      [ngoId]
+    );
+
+    const { rows } = await query(
+      `
+      SELECT
+        d.external_id AS donation_id,
+        d.source_doc AS donation_doc,
+        u.external_id AS user_id,
+        u.source_doc AS user_doc,
+        c.external_id AS campaign_id,
+        c.source_doc AS campaign_doc
+      FROM donations_rel d
+      CROSS JOIN LATERAL (
+        SELECT
+          CASE
+            WHEN jsonb_typeof(d.source_doc->'ngo') = 'string' THEN NULLIF(d.source_doc->>'ngo', '')
+            WHEN jsonb_typeof(d.source_doc->'ngo') = 'object' THEN NULLIF(d.source_doc#>>'{ngo,id}', '')
+            ELSE NULL
+          END AS ngo_ref,
+          CASE
+            WHEN jsonb_typeof(d.source_doc->'user') = 'string' THEN NULLIF(d.source_doc->>'user', '')
+            WHEN jsonb_typeof(d.source_doc->'user') = 'object' THEN NULLIF(d.source_doc#>>'{user,id}', '')
+            ELSE NULL
+          END AS user_ref,
+          CASE
+            WHEN jsonb_typeof(d.source_doc->'campaign') = 'string' THEN NULLIF(d.source_doc->>'campaign', '')
+            WHEN jsonb_typeof(d.source_doc->'campaign') = 'object' THEN NULLIF(d.source_doc#>>'{campaign,id}', '')
+            ELSE NULL
+          END AS campaign_ref
+      ) refs
+      LEFT JOIN users_rel u ON u.external_id = refs.user_ref
+      LEFT JOIN campaigns_rel c ON c.external_id = refs.campaign_ref
+      WHERE refs.ngo_ref = $1
+      ORDER BY d.created_at DESC
+      LIMIT $2
+      `,
+      [ngoId, limit]
+    );
+
+    const transactions = rows.map((row) => {
+      const donation = withNormalizedDonationCertificateState(mapRowDoc(row, 'donation_id', 'donation_doc'));
+      if (row.user_doc) {
+        const user = mapRowDoc(row, 'user_id', 'user_doc');
+        donation.user = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          mobileNumber: user.mobileNumber
+        };
+      } else {
+        donation.user = null;
+      }
+
+      if (row.campaign_doc) {
+        const campaign = mapRowDoc(row, 'campaign_id', 'campaign_doc');
+        donation.campaign = {
+          id: campaign.id,
+          title: campaign.title,
+          category: campaign.category,
+          location: campaign.location
+        };
+      } else {
+        donation.campaign = null;
+      }
+
+      return donation;
+    });
+
+    res.json({
+      summary: {
+        completedCount: Number(summaryRow.completed_count || 0),
+        totalCompletedAmount: Number(summaryRow.total_completed_amount || 0),
+        pendingCertificateCount: Number(summaryRow.pending_certificate_count || 0)
+      },
+      transactions
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all donations for logged-in user
 router.get('/my', auth(['user', 'ngo', 'admin']), async (req, res) => {
   try {
@@ -289,7 +454,7 @@ router.get('/my', auth(['user', 'ngo', 'admin']), async (req, res) => {
       .populate('campaign', 'title')
       .populate('certificate', 'certificateNumber type issuedAt')
       .sort({ createdAt: -1 });
-    res.json(donations);
+    res.json(donations.map((donation) => withNormalizedDonationCertificateState(donation)));
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -298,15 +463,20 @@ router.get('/my', auth(['user', 'ngo', 'admin']), async (req, res) => {
 // NGO queue: certificate approvals for donations
 router.get('/ngo/pending-approvals', auth(['ngo']), async (req, res) => {
   try {
-    const donations = await Donation.find({
-      ngo: req.user.id,
-      status: 'completed',
-      certificateApprovalStatus: 'pending'
-    })
+    const donations = await Donation.find({ ngo: req.user.id, status: 'completed' })
       .populate('user', 'name email mobileNumber')
       .populate('campaign', 'title')
       .sort({ certificateApprovalRequestedAt: 1, createdAt: 1 });
-    res.json(donations);
+    const pending = donations
+      .map((donation) => withNormalizedDonationCertificateState(donation))
+      .filter((donation) => donation.certificateApprovalStatus === 'pending')
+      .sort((left, right) => {
+        const leftTime = Date.parse(left.certificateApprovalRequestedAt || left.createdAt || 0) || 0;
+        const rightTime = Date.parse(right.certificateApprovalRequestedAt || right.createdAt || 0) || 0;
+        return leftTime - rightTime;
+      });
+
+    res.json(pending);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -438,12 +608,13 @@ router.post('/:id/confirm', auth(['user']), async (req, res) => {
     if (!donation) return res.status(404).json({ message: 'Donation not found' });
 
     if (donation.status === 'completed') {
+      const normalizedDonation = withNormalizedDonationCertificateState(donation);
       return res.json({
         message: 'Donation already confirmed.',
-        donation,
-        receipt: mapReceiptPayload(donation),
-        certificateApprovalStatus: donation.certificateApprovalStatus,
-        certificateId: donation.certificate || null
+        donation: normalizedDonation,
+        receipt: mapReceiptPayload(normalizedDonation),
+        certificateApprovalStatus: normalizedDonation.certificateApprovalStatus,
+        certificateId: getRefId(normalizedDonation.certificate) || null
       });
     }
 
@@ -458,12 +629,13 @@ router.post('/:id/confirm', auth(['user']), async (req, res) => {
       .populate('ngo', 'name')
       .populate('campaign', 'title');
 
+    const normalizedUpdated = withNormalizedDonationCertificateState(updated);
     res.json({
       message: 'Payment verified and donation completed.',
-      donation: updated,
-      receipt: mapReceiptPayload(updated),
-      certificateApprovalStatus: updated.certificateApprovalStatus,
-      certificateId: updated.certificate || null
+      donation: normalizedUpdated,
+      receipt: mapReceiptPayload(normalizedUpdated),
+      certificateApprovalStatus: normalizedUpdated.certificateApprovalStatus,
+      certificateId: getRefId(normalizedUpdated.certificate) || null
     });
   } catch (err) {
     console.error(err);

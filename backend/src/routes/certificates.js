@@ -4,8 +4,13 @@ const Certificate = require('../models/Certificate');
 const auth = require('../middleware/auth');
 const { renderCertificateHtml, toCertificateSlug } = require('../utils/certificateTemplates');
 
-const getCertificateForUser = async (certificateId, userId) =>
-  Certificate.findOne({ id: certificateId, user: userId, status: 'active' })
+const normalizeCertificateStatus = (certificate) => {
+  const raw = String(certificate?.status || '').trim().toLowerCase();
+  return raw || 'active';
+};
+
+const getCertificateForUser = async (certificateId, userId) => {
+  const certificate = await Certificate.findOne({ id: certificateId, user: userId })
     .populate('ngo', 'name')
     .populate('campaign', 'title')
     .populate('donation', 'amount paymentMethod receiptNumber createdAt')
@@ -15,10 +20,25 @@ const getCertificateForUser = async (certificateId, userId) =>
       populate: { path: 'opportunity', select: 'title' }
     });
 
+  if (!certificate) return null;
+
+  const status = normalizeCertificateStatus(certificate);
+  if (status !== 'active') return null;
+
+  // Backfill missing status/issuedAt for older rows.
+  if (!certificate.status) {
+    certificate.status = 'active';
+    certificate.issuedAt = certificate.issuedAt || certificate.createdAt || new Date();
+    await certificate.save();
+  }
+
+  return certificate;
+};
+
 // List all certificates for current user
 router.get('/my', auth(['user']), async (req, res) => {
   try {
-    const certificates = await Certificate.find({ user: req.user.id, status: 'active' })
+    const certificates = await Certificate.find({ user: req.user.id })
       .populate('ngo', 'name')
       .populate('campaign', 'title')
       .populate('donation', 'amount paymentMethod receiptNumber createdAt')
@@ -28,7 +48,8 @@ router.get('/my', auth(['user']), async (req, res) => {
         populate: { path: 'opportunity', select: 'title' }
       })
       .sort({ issuedAt: -1 });
-    res.json(certificates);
+    const active = (certificates || []).filter((certificate) => normalizeCertificateStatus(certificate) === 'active');
+    res.json(active);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

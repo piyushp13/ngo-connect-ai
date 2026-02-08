@@ -198,7 +198,7 @@ npm start
 ## Seed Credentials (Local)
 - Admin: `admin@ngoconnect.org` / `password123`
 - User: `rahul@example.com` / `password123`
-- NGO: `eduforall@ngo.org` / `password123`
+- NGO: `akshayapatra@ngo.org` / `password123`
 
 ## API Surface Summary
 - Authentication and profile: `/api/auth`, `/api/users`
