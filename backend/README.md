@@ -135,7 +135,24 @@ npm run db:relational-schema
 npm run seed
 npm run dev
 npm start
+npm run smoke
 ```
+
+### Smoke Test (API)
+
+Run the backend in one terminal, then execute the smoke test in another:
+
+```bash
+cd backend
+npm run dev
+```
+
+```bash
+cd backend
+npm run smoke
+```
+
+`npm run smoke` exercises user/NGO/admin flows end-to-end (donations, volunteering, certificates, support requests, messaging, moderation, admin dashboard snapshot).
 
 ## Local Validation Checklist
 
@@ -146,3 +163,5 @@ npm start
 - `GET /api/ngos` and `GET /api/campaigns` return data.
 - Donation initiate/confirm endpoints respond successfully.
 - Volunteer applications and certificate approval queues return expected results.
+- Support requests show up for the selected NGO: `POST /api/requests` then `GET /api/requests/ngo`.
+- Flag requests are visible in admin moderation: `POST /api/ngos/:id/flag-request` then `GET /api/admin/flag-requests`.

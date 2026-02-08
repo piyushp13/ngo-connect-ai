@@ -37,6 +37,15 @@ frontend/src/
 - User-only routes: donate, volunteer campaigns/opportunities, insights.
 - Admin-only routes: verification, analytics, requests, categories, notifications, moderation.
 
+### Feature Highlights
+- Donations: initiate/confirm flow, receipts, and NGO certificate approval.
+- Volunteering:
+  - Volunteer opportunities (apply, complete, NGO certificate approve).
+  - Campaign volunteering (submit details, NGO approve/reject, certificate issuance).
+- Support Requests: users submit help requests to a selected NGO; NGOs manage request status in their dashboard inbox; admin sees snapshot summary.
+- Messaging: threaded user <-> NGO conversations with unread counts.
+- Moderation: user-submitted flag requests for NGOs/campaigns and admin review workflow.
+
 ### Data Access Model
 - `api.js` configures a single Axios instance.
 - JWT token from `localStorage` is automatically attached to requests.

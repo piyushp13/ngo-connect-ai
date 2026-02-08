@@ -7,6 +7,7 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node seed.js",
+    "smoke": "node scripts/smokeTest.js",
     "db:relational-schema": "bash -lc 'source .env && psql \"$POSTGRES_URL\" -v ON_ERROR_STOP=1 -f sql/normalized_schema.sql'"
   },
   "dependencies": {

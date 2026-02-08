@@ -107,6 +107,15 @@ Mounted in `backend/src/server.js`:
   - Opportunity publishing by NGOs.
   - User applications and completion state transitions.
   - NGO certificate approval decision endpoints.
+- Support requests (help requests):
+  - Users submit a request to a selected NGO (`/api/requests`).
+  - NGOs manage request status in their dashboard inbox (`/api/requests/ngo`).
+  - Admin dashboard snapshot includes a support-requests panel (`/api/admin/dashboard`).
+- Moderation flag requests:
+  - Users request admin review for NGOs/campaigns (`/api/ngos/:id/flag-request`, `/api/campaigns/:id/flag-request`).
+  - Admin reviews and resolves requests (`/api/admin/flag-requests`).
+- Messaging:
+  - User-to-NGO and NGO-to-user messaging (`/api/messages/*`) with conversation threads and unread counts.
 - Admin flow:
   - NGO verification/rejection.
   - Flags moderation and resolution.
@@ -194,6 +203,19 @@ cd ../frontend
 npm install
 npm start
 ```
+
+### API Smoke Test
+
+With the backend running and a seeded database, run:
+
+```bash
+cd backend
+npm run smoke
+```
+
+Optional: override API base and credentials via env vars:
+- `API_BASE` (default: `http://localhost:5001/api`)
+- `SMOKE_USER_EMAIL`, `SMOKE_NGO_EMAIL`, `SMOKE_ADMIN_EMAIL` (passwords also supported)
 
 ## Seed Credentials (Local)
 - Admin: `admin@ngoconnect.org` / `password123`

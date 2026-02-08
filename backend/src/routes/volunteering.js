@@ -348,6 +348,7 @@ router.post('/', auth(['ngo']), async (req, res) => {
   try {
     const data = req.body;
     data.ngo = req.user.id;
+    if (!Array.isArray(data.applicants)) data.applicants = [];
     const opportunity = await VolunteerOpportunity.create(data);
     res.json(opportunity);
   } catch (err) {
@@ -361,6 +362,7 @@ router.post('/:id/apply', auth(['user']), async (req, res) => {
   try {
     const opportunity = await VolunteerOpportunity.findById(req.params.id).populate('ngo', 'name');
     if (!opportunity) return res.status(404).json({ message: 'Opportunity not found' });
+    if (!Array.isArray(opportunity.applicants)) opportunity.applicants = [];
 
     const user = await User.findById(req.user.id).select('name email mobileNumber');
     if (!user) return res.status(404).json({ message: 'User not found' });
@@ -447,6 +449,8 @@ router.delete('/:id/withdraw', auth(['user']), async (req, res) => {
   try {
     const opportunity = await VolunteerOpportunity.findById(req.params.id);
     if (!opportunity) return res.status(404).json({ message: 'Opportunity not found' });
+
+    if (!Array.isArray(opportunity.applicants)) opportunity.applicants = [];
     
     opportunity.applicants = opportunity.applicants.filter(
       id => id.toString() !== req.user.id
