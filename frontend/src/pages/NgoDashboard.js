@@ -53,6 +53,7 @@ export default function NgoDashboard() {
   const [volunteerApprovals, setVolunteerApprovals] = useState([]);
   const [approvalLoading, setApprovalLoading] = useState(true);
   const [approvalNotes, setApprovalNotes] = useState({});
+  const [approvalHours, setApprovalHours] = useState({});
   const [approvalMessage, setApprovalMessage] = useState('');
 
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
@@ -152,6 +153,10 @@ export default function NgoDashboard() {
     setApprovalNotes((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleApprovalHoursChange = (key, value) => {
+    setApprovalHours((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleDonationDecision = async (donationId, decision) => {
     try {
       const noteKey = `donation-${donationId}`;
@@ -183,12 +188,21 @@ export default function NgoDashboard() {
   const handleCampaignVolunteerDecision = async (campaignId, userId, decision) => {
     try {
       const noteKey = `campaign-volunteer-${campaignId}-${userId}`;
-      await reviewCampaignVolunteerRegistration(campaignId, {
+      const rawHours = approvalHours[noteKey];
+      const includeHours = rawHours !== undefined && rawHours !== null && String(rawHours).trim() !== '';
+      const hoursValue = includeHours ? Number(rawHours) : undefined;
+      if (includeHours && (!Number.isFinite(hoursValue) || hoursValue < 0)) {
+        setApprovalMessage('Please enter a valid non-negative number of hours.');
+        return;
+      }
+
+      const res = await reviewCampaignVolunteerRegistration(campaignId, {
         userId,
         decision,
-        note: approvalNotes[noteKey] || ''
+        note: approvalNotes[noteKey] || '',
+        ...(includeHours ? { activityHours: hoursValue } : {})
       });
-      setApprovalMessage(`Campaign volunteer ${decision === 'approve' ? 'approved' : 'rejected'} successfully.`);
+      setApprovalMessage(res.data?.message || `Campaign volunteer ${decision === 'approve' ? 'approved' : 'rejected'} successfully.`);
       await loadDashboardData();
     } catch (err) {
       setApprovalMessage(err.response?.data?.message || 'Failed to update campaign volunteer status.');
@@ -497,12 +511,15 @@ export default function NgoDashboard() {
                     const activities = Array.isArray(registration?.preferredActivities)
                       ? registration.preferredActivities.filter(Boolean).join(', ')
                       : '';
-                    const approvalStatus = registration
-                      ? String(registration.certificateApprovalStatus || '').trim().toLowerCase() || 'pending'
-                      : 'missing_details';
-                    const noteKey = `campaign-volunteer-${item.campaign?.id || ''}-${item.user?.id || item.userId || index}`;
-                    const hasCertificate = Boolean(registration?.certificate);
-                    return (
+	                    const approvalStatus = registration
+	                      ? String(registration.certificateApprovalStatus || '').trim().toLowerCase() || 'pending'
+	                      : 'missing_details';
+	                    const noteKey = `campaign-volunteer-${item.campaign?.id || ''}-${item.user?.id || item.userId || index}`;
+	                    const hasCertificate = Boolean(registration?.certificate);
+	                    const hoursValue = approvalHours[noteKey] !== undefined
+	                      ? approvalHours[noteKey]
+	                      : (registration?.activityHours ?? '');
+	                    return (
                       <tr key={`${item.user?.id || item.userId || index}-${item.campaign?.id || index}`} className="border-t border-gray-100">
                         <td className="px-3 py-2 text-gray-800">
                           <p className="font-medium">{item.user?.name || registration?.fullName || 'Volunteer'}</p>
@@ -536,52 +553,65 @@ export default function NgoDashboard() {
                           {registration?.certificateApprovalNote && approvalStatus !== 'pending' && (
                             <p className="mt-1 text-xs text-gray-600">Note: {registration.certificateApprovalNote}</p>
                           )}
-                          <p className="mt-1 text-xs text-gray-500">
-                            Certificate:{' '}
-                            {hasCertificate ? (
-                              <span className="text-emerald-700 font-semibold">Issued</span>
-                            ) : approvalStatus === 'pending' ? (
-                              <span className="text-gray-600">Pending</span>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </p>
-                        </td>
-                        <td className="px-3 py-2 text-gray-700">
-                          {approvalStatus === 'pending' && registration ? (
-                            <div className="min-w-[240px] space-y-2">
-                              <textarea
-                                rows={2}
-                                value={approvalNotes[noteKey] || ''}
-                                onChange={(e) => handleApprovalNoteChange(noteKey, e.target.value)}
-                                placeholder="Optional note for the volunteer"
-                                className="w-full border border-gray-300 rounded-md p-2 text-xs"
-                              />
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => handleCampaignVolunteerDecision(item.campaign?.id, item.user?.id || item.userId, 'approve')}
-                                  className="px-3 py-2 text-xs bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
-                                >
-                                  Approve
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleCampaignVolunteerDecision(item.campaign?.id, item.user?.id || item.userId, 'reject')}
-                                  className="px-3 py-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700"
-                                >
-                                  Reject
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-400">-</span>
-                          )
-                          }
-                        </td>
-                      </tr>
-                    );
-                  })
+	                          <p className="mt-1 text-xs text-gray-500">
+	                            Certificate:{' '}
+	                            {hasCertificate ? (
+	                              <span className="text-emerald-700 font-semibold">Issued</span>
+	                            ) : approvalStatus === 'pending' ? (
+	                              <span className="text-gray-600">Pending</span>
+	                            ) : (
+	                              <span className="text-gray-400">-</span>
+	                            )}
+	                          </p>
+	                          {registration && approvalStatus === 'approved' && (
+	                            <p className="mt-1 text-xs text-gray-500">Hours: {Number(registration.activityHours || 0)}</p>
+	                          )}
+	                        </td>
+	                        <td className="px-3 py-2 text-gray-700">
+	                          {(registration && (approvalStatus === 'pending' || approvalStatus === 'approved')) ? (
+	                            <div className="min-w-[260px] space-y-2">
+	                              <input
+	                                type="number"
+	                                min="0"
+	                                step="0.5"
+	                                value={hoursValue}
+	                                onChange={(e) => handleApprovalHoursChange(noteKey, e.target.value)}
+	                                placeholder="Hours served"
+	                                className="w-full border border-gray-300 rounded-md px-2 py-1 text-xs"
+	                              />
+	                              <textarea
+	                                rows={2}
+	                                value={approvalNotes[noteKey] || ''}
+	                                onChange={(e) => handleApprovalNoteChange(noteKey, e.target.value)}
+	                                placeholder="Optional note for the volunteer"
+	                                className="w-full border border-gray-300 rounded-md p-2 text-xs"
+	                              />
+	                              <div className="flex gap-2">
+	                                <button
+	                                  type="button"
+	                                  onClick={() => handleCampaignVolunteerDecision(item.campaign?.id, item.user?.id || item.userId, 'approve')}
+	                                  className="px-3 py-2 text-xs bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+	                                >
+	                                  {approvalStatus === 'approved' ? 'Update' : 'Approve'}
+	                                </button>
+	                                {approvalStatus === 'pending' && (
+	                                  <button
+	                                    type="button"
+	                                    onClick={() => handleCampaignVolunteerDecision(item.campaign?.id, item.user?.id || item.userId, 'reject')}
+	                                    className="px-3 py-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700"
+	                                  >
+	                                    Reject
+	                                  </button>
+	                                )}
+	                              </div>
+	                            </div>
+	                          ) : (
+	                            <span className="text-xs text-gray-400">-</span>
+	                          )}
+	                        </td>
+	                      </tr>
+	                    );
+	                  })
                 )}
               </tbody>
             </table>

@@ -127,6 +127,8 @@ router.get('/my/volunteer-registrations', auth(['user']), async (req, res) => {
           preferredActivities: rawRegistration.preferredActivities || [],
           availability: rawRegistration.availability || '',
           motivation: rawRegistration.motivation || '',
+          activityHours: Number(rawRegistration.activityHours || 0),
+          completedAt: rawRegistration.completedAt || null,
           createdAt: rawRegistration.createdAt || null,
           updatedAt: rawRegistration.updatedAt || null,
           ...normalizeCampaignVolunteerApproval(rawRegistration),
@@ -288,6 +290,8 @@ router.get('/ngo/volunteers', auth(['ngo']), async (req, res) => {
             preferredActivities: registration.preferredActivities || [],
             availability: registration.availability || '',
             motivation: registration.motivation || '',
+            activityHours: Number(registration.activityHours || 0),
+            completedAt: registration.completedAt || null,
             createdAt: registration.createdAt || null,
             updatedAt: registration.updatedAt || null,
             ...normalizeCampaignVolunteerApproval(registration),
@@ -373,10 +377,20 @@ router.post('/:id/volunteer/decision', auth(['ngo']), async (req, res) => {
     const userId = String(req.body?.userId || '').trim();
     const decision = normalizeDecision(req.body?.decision);
     const note = String(req.body?.note || '').trim();
+    const hoursRaw = req.body?.activityHours;
 
     if (!userId) return res.status(400).json({ message: 'userId is required.' });
     if (!['approve', 'reject'].includes(decision)) {
       return res.status(400).json({ message: 'Decision must be either approve or reject.' });
+    }
+
+    let normalizedHours = null;
+    if (hoursRaw !== undefined && hoursRaw !== null && String(hoursRaw).trim() !== '') {
+      const parsed = Number(hoursRaw);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return res.status(400).json({ message: 'activityHours must be a non-negative number.' });
+      }
+      normalizedHours = Math.round(parsed * 10) / 10;
     }
 
     const campaign = await Campaign.findById(campaignId);
@@ -406,12 +420,20 @@ router.post('/:id/volunteer/decision', auth(['ngo']), async (req, res) => {
       user: userId
     };
 
+    const previousStatus = String(base.certificateApprovalStatus || '').trim().toLowerCase();
+    const wasApproved = previousStatus === 'approved';
+    const resolvedNote = note || String(base.certificateApprovalNote || '').trim();
+    const reviewedAt = base.certificateApprovalReviewedAt || nowIso();
+
     if (decision === 'reject') {
+      if (wasApproved) {
+        return res.status(400).json({ message: 'Certificate already issued and cannot be rejected.' });
+      }
       const updated = {
         ...base,
         certificateApprovalStatus: 'rejected',
-        certificateApprovalReviewedAt: nowIso(),
-        certificateApprovalNote: note || '',
+        certificateApprovalReviewedAt: reviewedAt,
+        certificateApprovalNote: resolvedNote,
         certificateApprovedBy: req.user.id,
         certificate: null,
         updatedAt: new Date()
@@ -444,6 +466,7 @@ router.post('/:id/volunteer/decision', auth(['ngo']), async (req, res) => {
       ]);
       const preferred = Array.isArray(base.preferredActivities) ? base.preferredActivities.filter(Boolean) : [];
       const assignedTask = preferred[0] || 'Campaign Volunteer Service';
+      const completionDate = base.completedAt || nowIso();
 
       certificate = await Certificate.create({
         user: userId,
@@ -459,34 +482,47 @@ router.post('/:id/volunteer/decision', auth(['ngo']), async (req, res) => {
           recipientEmail: base.email || userDoc?.email || '',
           ngoName: ngoDoc?.name || 'Partner NGO',
           campaignTitle: campaign.title || 'Community Initiative',
-          assignedTask
+          assignedTask,
+          completionDate,
+          activityHours: normalizedHours !== null ? normalizedHours : Number(base.activityHours || 0)
         }
       });
+    } else if (certificate && normalizedHours !== null) {
+      certificate.metadata = {
+        ...(certificate.metadata || {}),
+        activityHours: normalizedHours,
+        completionDate: base.completedAt || certificate.metadata?.completionDate || nowIso()
+      };
+      await certificate.save();
     }
 
     const updated = {
       ...base,
       certificateApprovalStatus: 'approved',
-      certificateApprovalReviewedAt: nowIso(),
-      certificateApprovalNote: note || '',
+      certificateApprovalReviewedAt: reviewedAt,
+      certificateApprovalNote: resolvedNote,
       certificateApprovedBy: req.user.id,
       certificate: certificate?.id || base.certificate || null,
+      ...(normalizedHours !== null ? { activityHours: normalizedHours } : {}),
+      completedAt: base.completedAt || nowIso(),
       updatedAt: new Date()
     };
     campaign.volunteerRegistrations[registrationIndex] = updated;
     await campaign.save();
 
-    await Message.create({
-      fromNGO: req.user.id,
-      toUser: userId,
-      body: `Your volunteer registration for \"${campaign.title || 'this campaign'}\" was approved. Your certificate is now available in your dashboard.`,
-      read: false,
-      threadKey: buildThreadKey(userId, req.user.id),
-      meta: { event: 'campaign-volunteer-approved', campaignId: campaign.id, certificateId: certificate?.id }
-    });
+    if (!wasApproved) {
+      await Message.create({
+        fromNGO: req.user.id,
+        toUser: userId,
+        body: `Your volunteer registration for \"${campaign.title || 'this campaign'}\" was approved. Your certificate is now available in your dashboard.`,
+        read: false,
+        threadKey: buildThreadKey(userId, req.user.id),
+        meta: { event: 'campaign-volunteer-approved', campaignId: campaign.id, certificateId: certificate?.id }
+      });
+    }
 
     res.json({
-      message: 'Volunteer registration approved and certificate issued.',
+      message: wasApproved ? 'Campaign volunteer updated successfully.' : 'Volunteer registration approved and certificate issued.',
       registration: updated,
       certificate
     });

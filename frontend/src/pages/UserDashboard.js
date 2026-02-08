@@ -343,8 +343,27 @@ export default function UserDashboard() {
         current.volunteerActivities += 1;
       });
 
+    campaignVolunteerRegistrations
+      .filter((row) => {
+        const status = String(row?.registration?.certificateApprovalStatus || '').trim().toLowerCase();
+        return Boolean(row?.registration) && status === 'approved';
+      })
+      .forEach((row) => {
+        const registration = row?.registration || {};
+        const approvedAtValue = registration?.certificateApprovalReviewedAt || registration?.completedAt || registration?.updatedAt || registration?.createdAt;
+        const approvedAt = approvedAtValue ? new Date(approvedAtValue) : null;
+        if (!approvedAt || Number.isNaN(approvedAt.getTime())) return;
+
+        const key = `${approvedAt.getFullYear()}-${String(approvedAt.getMonth() + 1).padStart(2, '0')}`;
+        if (!buckets.has(key)) {
+          buckets.set(key, { key, month: monthLabel(approvedAt), donatedAmount: 0, volunteerActivities: 0 });
+        }
+        const current = buckets.get(key);
+        current.volunteerActivities += 1;
+      });
+
     return Array.from(buckets.values()).sort((a, b) => a.key.localeCompare(b.key));
-  }, [donationsHistory, volunteerHistory]);
+  }, [donationsHistory, volunteerHistory, campaignVolunteerRegistrations]);
 
   const totalDonated = useMemo(
     () => donationsHistory
@@ -353,17 +372,29 @@ export default function UserDashboard() {
     [donationsHistory]
   );
 
-  const completedVolunteerActivities = useMemo(
-    () => volunteerHistory.filter((application) => application?.status === 'completed').length,
-    [volunteerHistory]
-  );
+  const completedVolunteerActivities = useMemo(() => {
+    const opportunityCount = volunteerHistory.filter((application) => application?.status === 'completed').length;
+    const campaignCount = campaignVolunteerRegistrations.filter((row) => {
+      const status = String(row?.registration?.certificateApprovalStatus || '').trim().toLowerCase();
+      return Boolean(row?.registration) && status === 'approved';
+    }).length;
+    return opportunityCount + campaignCount;
+  }, [volunteerHistory, campaignVolunteerRegistrations]);
 
-  const totalVolunteerHours = useMemo(
-    () => volunteerHistory
+  const totalVolunteerHours = useMemo(() => {
+    const opportunityHours = volunteerHistory
       .filter((application) => application?.status === 'completed')
-      .reduce((sum, application) => sum + Number(application?.activityHours || 0), 0),
-    [volunteerHistory]
-  );
+      .reduce((sum, application) => sum + Number(application?.activityHours || 0), 0);
+
+    const campaignHours = campaignVolunteerRegistrations
+      .filter((row) => {
+        const status = String(row?.registration?.certificateApprovalStatus || '').trim().toLowerCase();
+        return Boolean(row?.registration) && status === 'approved';
+      })
+      .reduce((sum, row) => sum + Number(row?.registration?.activityHours || 0), 0);
+
+    return opportunityHours + campaignHours;
+  }, [volunteerHistory, campaignVolunteerRegistrations]);
 
   const openDonationDetails = async (donation) => {
     setSelectedVolunteer(null);
